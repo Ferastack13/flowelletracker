@@ -1,0 +1,197 @@
+@import "tailwindcss";
+
+:root {
+  /* Brand */
+  --plum: #4a263b;
+  --plum-deep: #351a2a;
+  --plum-soft: #6b3a55;
+  --rose: #d69aa8;
+  --rose-soft: #e8c4ce;
+  --rose-muted: #c47f91;
+  --ivory: #f8f3ed;
+  --ivory-warm: #f3ebe2;
+  --sage: #a5a995;
+  --sage-deep: #7f846f;
+  --sage-soft: #c5c8b8;
+
+  /* Semantic surfaces */
+  --background: var(--ivory);
+  --foreground: var(--plum);
+  --card: #fffcf8;
+  --card-foreground: var(--plum);
+  --muted: var(--ivory-warm);
+  --muted-foreground: #6f5564;
+  --border: #e4d6cc;
+  --input: #e4d6cc;
+  --ring: var(--plum-soft);
+  --primary: var(--plum);
+  --primary-foreground: var(--ivory);
+  --secondary: #efe4dc;
+  --secondary-foreground: var(--plum);
+  --accent: var(--sage-soft);
+  --accent-foreground: var(--plum-deep);
+  --destructive: #9b3b4a;
+  --destructive-foreground: #fff8f6;
+  --success: var(--sage-deep);
+  --success-foreground: var(--ivory);
+
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  --shadow-soft: 0 1px 2px rgb(74 38 59 / 0.04), 0 8px 24px rgb(74 38 59 / 0.06);
+  --shadow-lift: 0 2px 4px rgb(74 38 59 / 0.05), 0 16px 40px rgb(74 38 59 / 0.08);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-plum: var(--plum);
+  --color-plum-deep: var(--plum-deep);
+  --color-plum-soft: var(--plum-soft);
+  --color-rose: var(--rose);
+  --color-rose-soft: var(--rose-soft);
+  --color-rose-muted: var(--rose-muted);
+  --color-ivory: var(--ivory);
+  --color-ivory-warm: var(--ivory-warm);
+  --color-sage: var(--sage);
+  --color-sage-deep: var(--sage-deep);
+  --color-sage-soft: var(--sage-soft);
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-lift: var(--shadow-lift);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    background-image:
+      radial-gradient(ellipse 80% 50% at 0% -10%, rgb(214 154 168 / 0.18), transparent 55%),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgb(165 169 149 / 0.16), transparent 50%),
+      linear-gradient(180deg, var(--ivory) 0%, var(--ivory-warm) 100%);
+    background-attachment: fixed;
+    min-height: 100%;
+  }
+
+  ::selection {
+    background: rgb(214 154 168 / 0.35);
+    color: var(--plum-deep);
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .surface-card {
+    background: var(--card);
+    box-shadow: var(--shadow-soft);
+  }
+
+  .editorial-rule {
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgb(74 38 59 / 0.18),
+      transparent
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes soft-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes draw-ring {
+  from {
+    stroke-dashoffset: 100;
+  }
+  to {
+    stroke-dashoffset: 28;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.6s ease-out both;
+}
+
+.animate-fade-up-delay-1 {
+  animation: fade-up 0.6s ease-out 0.1s both;
+}
+
+.animate-fade-up-delay-2 {
+  animation: fade-up 0.6s ease-out 0.2s both;
+}
+
+.animate-fade-up-delay-3 {
+  animation: fade-up 0.6s ease-out 0.3s both;
+}
+
+.animate-soft-pulse {
+  animation: soft-pulse 2.4s ease-in-out infinite;
+}

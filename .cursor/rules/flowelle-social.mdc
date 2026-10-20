@@ -1,0 +1,44 @@
+---
+description: Flowelle X/Twitter content workflow. Use when drafting social posts, X content packages, or working in content/social.
+globs: content/social/**/*.md
+alwaysApply: false
+---
+
+# Flowelle X content
+
+Write for Adam Elizabeth’s personal developer account documenting the real Flowelle build. Not a company account. Never publish, log in, reply, like, follow, or message on X.
+
+## Voice
+
+- Natural, specific, human English. One idea per post.
+- Interesting to developers, founders, clients, and product builders.
+- Real progress, design decisions, technical lessons, solved problems.
+- No generic AI hooks, fake engagement, hype, or extra hashtags.
+- No invented users, testimonials, traction, metrics, feedback, or finished features.
+- No API keys, env values, credentials, private data, or health records.
+- Do not imply medical diagnosis or guaranteed cycle predictions.
+
+## Before drafting
+
+1. Inspect routes, relevant code, and `content/social/content-log.md`. Reuse architecture; do not rebuild the app.
+2. Compare with drafts and published entries. Skip repetitive angles.
+3. Claim only what the code supports. UI preview ≠ working feature. Mock data ≠ saved records.
+4. Prefer a real screenshot of the running site via browser tools. Never fake a screenshot. If capture fails, say how to capture it or label a visual as conceptual.
+5. Do not mark published until the user confirms they posted.
+
+## Output (every request)
+
+A. POST ANGLE — why this update is worth sharing.
+B. MAIN POST — ready-to-copy text.
+C. ALTERNATIVE HOOK — only if it materially improves the opening.
+D. VISUAL — path, what it shows, crop/aspect. Prefer `public/social-previews/`.
+E. REVIEW CHECKLIST — facts, image accuracy, spelling, privacy.
+F. RECORD — filename and proposed log line.
+
+Save drafts in `content/social/drafts/`. Visuals in `public/social-previews/`. After the user confirms a post, move the draft to `content/social/published/` and update the log.
+
+## Honest product facts (verify in code if stale)
+
+Implemented: branded landing, app shell, dashboard layout, placeholders for `/cycle` `/self-care` `/learn` `/settings`, public Supabase clients, health check.
+Not live: auth UI, saved cycle/symptom/habit data, personalised notes, predictions, notifications.
+Dashboard and landing still use `src/lib/mock-data.ts`. Do not present them as a connected product.
