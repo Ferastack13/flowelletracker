@@ -9,6 +9,13 @@ export const metadata: Metadata = {
   description:
     "Flowelle is a premium menstrual health and self-care companion for understanding your cycle, recording symptoms, and nurturing daily rituals.",
   applicationName: "Flowelle",
+  icons: {
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: [{ url: "/apple-icon.svg", type: "image/svg+xml" }],
+  },
 };
 
 export default function RootLayout({
