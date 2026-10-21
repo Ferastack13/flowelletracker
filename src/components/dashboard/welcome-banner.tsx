@@ -1,10 +1,12 @@
 interface WelcomeBannerProps {
   /** Optional short supporting line under the heading. */
   subtitle?: string;
+  signedIn?: boolean;
 }
 
 export function WelcomeBanner({
   subtitle = "A calm overview of your cycle, care, and daily note.",
+  signedIn = false,
 }: WelcomeBannerProps) {
   return (
     <section
@@ -27,7 +29,9 @@ export function WelcomeBanner({
           </p>
         </div>
         <p className="shrink-0 text-xs leading-relaxed text-muted-foreground sm:max-w-[14rem] sm:text-right">
-          Preview interface — accounts and saved records are not connected yet.
+          {signedIn
+            ? "You are signed in. Cycle records and notes are still not saved."
+            : "You can preview without an account. Tracking is not connected yet."}
         </p>
       </div>
     </section>

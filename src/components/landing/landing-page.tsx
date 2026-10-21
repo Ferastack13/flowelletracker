@@ -72,6 +72,12 @@ export function LandingPage() {
             Privacy
           </Link>
           <Link
+            href="/login"
+            className="hidden text-sm text-muted-foreground transition-colors hover:text-plum sm:inline"
+          >
+            Sign in
+          </Link>
+          <Link
             href="/dashboard"
             className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >

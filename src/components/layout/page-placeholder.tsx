@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
+import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -18,7 +18,7 @@ export function PagePlaceholder({
   upcoming,
 }: PagePlaceholderProps) {
   return (
-    <AppShell title={title} description={description}>
+    <AppShellWithAuth title={title} description={description}>
       <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr]">
         <Card className="animate-fade-up">
           <CardHeader>
@@ -58,6 +58,6 @@ export function PagePlaceholder({
           </CardContent>
         </Card>
       </div>
-    </AppShell>
+    </AppShellWithAuth>
   );
 }

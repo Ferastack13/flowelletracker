@@ -14,17 +14,20 @@ import {
   MOCK_DATA_NOTICE,
   type MockCycleOverview,
 } from "@/lib/mock-data";
+import type { CycleOverview } from "@/lib/cycle";
 import { cn } from "@/lib/utils";
 
 interface CycleOverviewCardProps {
-  cycle: MockCycleOverview;
+  cycle: CycleOverview | MockCycleOverview;
   /** When true, shows a preview badge (marketing / sample UI). */
   isPreviewSample?: boolean;
+  signedIn?: boolean;
 }
 
 export function CycleOverviewCard({
   cycle,
   isPreviewSample = false,
+  signedIn = false,
 }: CycleOverviewCardProps) {
   if (!cycle.hasCycleData) {
     return (
@@ -50,9 +53,9 @@ export function CycleOverviewCard({
               Your cycle begins with one gentle entry
             </h3>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              Nothing is logged yet. Open the tracker to prepare your first
-              period entry — saving and predictions are not live in this
-              preview.
+              {signedIn
+                ? "No period start is saved yet. Log a date in the tracker — Flowelle will not predict what comes next."
+                : "Sign in to save a period start. The tracker is ready; nothing is stored until you have an account."}
             </p>
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               <Link
@@ -91,7 +94,7 @@ export function CycleOverviewCard({
           ) : null}
         </div>
         <CardDescription>
-          A calm snapshot of your current phase — not a medical prediction.
+          Counted from your last logged start. This is not a medical prediction.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-5">
@@ -105,12 +108,16 @@ export function CycleOverviewCard({
               </span>
             </p>
           </div>
-          <Badge variant="rose">{cycle.phaseLabel}</Badge>
+          {cycle.phaseLabel ? (
+            <Badge variant="rose">{cycle.phaseLabel}</Badge>
+          ) : (
+            <Badge variant="outline">Logged dates only</Badge>
+          )}
         </div>
 
         <div>
           <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Cycle progress</span>
+            <span>Progress vs an assumed {cycle.cycleLength}-day length</span>
             <span>{progress}%</span>
           </div>
           <div
@@ -130,8 +137,9 @@ export function CycleOverviewCard({
 
         {cycle.lastPeriodStart ? (
           <p className="text-sm text-muted-foreground">
-            Last period start in this preview:{" "}
+            Last logged start:{" "}
             <time dateTime={cycle.lastPeriodStart}>{cycle.lastPeriodStart}</time>
+            {isPreviewSample ? " (preview sample)" : null}
           </p>
         ) : null}
       </CardContent>

@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
-import { CalendarDays } from "lucide-react";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { CycleTracker } from "@/app/cycle/cycle-tracker";
+import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
+import { getSignedInEmail } from "@/lib/supabase/auth";
+import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
 
 export const metadata: Metadata = {
   title: "Cycle Tracker",
-  description: "Track your menstrual cycle with Flowelle — coming soon.",
+  description: "Log period start and end dates in Flowelle.",
 };
 
-export default function CyclePage() {
+export default async function CyclePage() {
+  const email = await getSignedInEmail();
+  const periods = email ? await listCyclePeriods() : [];
+
   return (
-    <PagePlaceholder
+    <AppShellWithAuth
       title="Cycle Tracker"
-      description="Log periods, note symptoms, and eventually see phase context — without noisy predictions."
-      icon={CalendarDays}
-      upcoming={[
-        "Period start and end logging",
-        "Symptom and mood check-ins",
-        "Phase-aware overview (after you have history)",
-        "Export and privacy controls",
-      ]}
-    />
+      description="Record the dates you already know. Flowelle does not predict your next period."
+    >
+      <CycleTracker signedIn={Boolean(email)} periods={periods} />
+    </AppShellWithAuth>
   );
 }

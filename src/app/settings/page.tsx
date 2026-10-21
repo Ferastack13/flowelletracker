@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Settings } from "lucide-react";
-import { AppShell } from "@/components/layout/app-shell";
+import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,9 +15,9 @@ export const metadata: Metadata = {
 
 export default function SettingsPage() {
   return (
-    <AppShell
+    <AppShellWithAuth
       title="Settings"
-      description="Preferences, privacy, and account controls will live here once authentication is connected."
+      description="Sign in from the sidebar. Profile preferences still do not save."
     >
       <div className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
         <Card className="animate-fade-up">
@@ -73,6 +73,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-    </AppShell>
+    </AppShellWithAuth>
   );
 }

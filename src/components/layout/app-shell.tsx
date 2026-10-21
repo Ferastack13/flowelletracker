@@ -12,9 +12,15 @@ interface AppShellProps {
   children: React.ReactNode;
   title?: string;
   description?: string;
+  accountPanel?: React.ReactNode;
 }
 
-export function AppShell({ children, title, description }: AppShellProps) {
+export function AppShell({
+  children,
+  title,
+  description,
+  accountPanel,
+}: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const panelId = useId();
 
@@ -58,12 +64,15 @@ export function AppShell({ children, title, description }: AppShellProps) {
             />
           ))}
         </nav>
-        <div className="mt-8 rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3.5">
-          <p className="font-serif text-sm text-plum">Private by design</p>
-          <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-            Authentication and cloud sync are not connected yet. Nothing here is
-            saved to an account.
-          </p>
+        <div className="mt-8">
+          {accountPanel ?? (
+            <div className="rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3.5">
+              <p className="font-serif text-sm text-plum">Private by design</p>
+              <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                Sign in from the login page. Cycle records are not saved yet.
+              </p>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -128,10 +137,14 @@ export function AppShell({ children, title, description }: AppShellProps) {
                 />
               ))}
             </nav>
-            <div className="mt-auto rounded-xl border border-border/60 bg-muted/40 p-3.5">
-              <p className="text-[11px] leading-relaxed text-muted-foreground">
-                Preview mode — no account sync yet.
-              </p>
+            <div className="mt-auto">
+              {accountPanel ?? (
+                <div className="rounded-xl border border-border/60 bg-muted/40 p-3.5">
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Preview mode — tracking is not saved yet.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
