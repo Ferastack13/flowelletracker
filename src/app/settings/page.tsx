@@ -38,7 +38,7 @@ export default function SettingsPage() {
                 aria-describedby="display-name-help"
               />
               <p id="display-name-help" className="text-xs text-muted-foreground">
-                Saving is disabled until accounts are implemented.
+                Profile preferences do not save yet.
               </p>
             </div>
             <div className="space-y-2">
@@ -65,10 +65,10 @@ export default function SettingsPage() {
           </CardHeader>
           <CardContent>
             <ul className="space-y-3 text-sm leading-relaxed text-muted-foreground">
-              <li>Account sign-in via Supabase</li>
               <li>Notification preferences (off by default)</li>
               <li>Data export and deletion</li>
               <li>Cycle length defaults and privacy toggles</li>
+              <li>A saved display name and greeting</li>
             </ul>
           </CardContent>
         </Card>

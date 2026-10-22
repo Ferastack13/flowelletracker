@@ -15,7 +15,8 @@ export async function AccountPanel() {
       <div className="rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3.5">
         <p className="font-serif text-sm text-plum">Sign in when you are ready</p>
         <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-          Accounts work. Cycle logs, habits, and notes are still not saved.
+          Sign in to save period dates and self-care check-ins. Today’s note is
+          general, not personalised.
         </p>
         <Link
           href="/login"
@@ -37,7 +38,8 @@ export async function AccountPanel() {
         {email}
       </p>
       <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-        Tracking is not connected yet. Nothing you log here is stored.
+        Period dates and self-care check-ins save to your account. Today’s note
+        is general, not personalised.
       </p>
       <form action={signOut} className="mt-3">
         <Button type="submit" variant="outline" size="sm" className="w-full">

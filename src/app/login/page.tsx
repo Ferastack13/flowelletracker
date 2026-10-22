@@ -27,7 +27,7 @@ export default async function LoginPage({
           href="/dashboard"
           className={cn(buttonVariants({ variant: "ghost", size: "sm" }))}
         >
-          Preview dashboard
+          Open dashboard
         </Link>
       </header>
       <main className="mx-auto flex w-full max-w-md flex-1 items-center py-10">
@@ -40,8 +40,8 @@ export default async function LoginPage({
               Sign in to your space
             </CardTitle>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              We send a one-time link to your email. No password. Tracking is
-              not connected yet.
+              We send a one-time link to your email. No password. Period dates
+              and self-care check-ins save after you sign in.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">

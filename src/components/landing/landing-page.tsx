@@ -23,7 +23,7 @@ const features = [
   {
     title: "Cycle clarity",
     description:
-      "Log periods and symptoms in a calm interface designed for understanding — not alarmist predictions.",
+      "Log period dates in a calm interface designed for understanding — not alarmist predictions. Symptom logging comes later.",
     icon: Waves,
   },
   {
@@ -35,7 +35,7 @@ const features = [
   {
     title: "Her Daily Note",
     description:
-      "Receive a thoughtful daily message. Personalisation will arrive with real cycle history — not before.",
+      "Receive a thoughtful daily message. It is general for the date, not written from your cycle.",
     icon: Sparkles,
   },
   {
@@ -87,7 +87,7 @@ export function LandingPage() {
             href="/dashboard"
             className={cn(buttonVariants({ size: "sm" }))}
           >
-            Explore preview
+            Enter Flowelle
           </Link>
         </nav>
       </header>
@@ -112,15 +112,16 @@ export function LandingPage() {
                 with intention.
               </h1>
               <p className="mt-5 max-w-lg text-base leading-relaxed text-muted-foreground sm:text-lg">
-                Track symptoms, nurture self-care habits, and receive thoughtful
-                daily notes — designed with editorial calm, not clinical noise.
+                Log period dates, nurture self-care habits, and receive a
+                thoughtful daily note — designed with editorial calm, not
+                clinical noise.
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
                   href="/dashboard"
                   className={cn(buttonVariants({ size: "lg" }))}
                 >
-                  Open dashboard preview
+                  Open dashboard
                 </Link>
                 <Link
                   href="#features"
@@ -132,7 +133,8 @@ export function LandingPage() {
                 </Link>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
-                Preview UI only — authentication and saved records are not live.
+                Sign in to save period dates and self-care. Today’s note is
+                general. Symptom logging is not live yet.
               </p>
             </div>
             <ProductPreview />
@@ -219,7 +221,7 @@ export function LandingPage() {
               <CardContent className="space-y-4 p-6">
                 {[
                   "Empty-state clarity when no cycle data exists",
-                  "Quick actions prepared for logging — disabled until wired",
+                  "Period logging and self-care check-ins are ready; symptom logging is not",
                   "Mobile navigation that stays reachable and calm",
                 ].map((item) => (
                   <p
@@ -256,10 +258,9 @@ export function LandingPage() {
               </h2>
               <p className="mt-4 text-muted-foreground leading-relaxed">
                 Flowelle is being built with privacy as a foundation. Cycle
-                details, symptoms, and notes should never feel exposed or
-                performative. Authentication, encrypted storage, and account
-                controls will land with Supabase — until then, this preview does
-                not collect or persist personal health data.
+                details should never feel exposed or performative. Sign-in,
+                period dates, and self-care check-ins save privately to your
+                account. Symptom logs and personalised notes are not stored yet.
               </p>
             </div>
           </div>
@@ -273,11 +274,11 @@ export function LandingPage() {
             id="cta-heading"
             className="font-serif text-3xl tracking-tight text-plum md:text-4xl"
           >
-            Begin with the preview
+            Begin in your space
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Walk through the interface today. Real accounts and personalised
-            notes will follow when the product foundation is ready.
+            Sign in to save period dates and self-care. Today’s note is already
+            here. Personalised notes are not live yet.
           </p>
           <Link
             href="/dashboard"

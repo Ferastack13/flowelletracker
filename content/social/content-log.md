@@ -25,6 +25,8 @@ Brand: deep plum `#4A263B`, dusty rose `#D69AA8`, warm ivory `#F8F3ED`, soft sag
 | Date | File | Angle | Status |
 | ---- | ---- | ----- | ------ |
 | 2026-10-20 | `drafts/2026-10-20-idea-to-web-app.md` | Idea → real web app; UI ahead of tracking | draft |
+| 2026-10-21 | `drafts/2026-10-21-journal-not-clinic.md` | Journal not clinic; live dashboard UI | draft |
+| 2026-10-21 | `drafts/2026-10-21-phone-mockup.md` | Phone mockup of live dashboard UI | draft |
 
 ## Published
 
@@ -35,3 +37,4 @@ Brand: deep plum `#4A263B`, dusty rose `#D69AA8`, warm ivory `#F8F3ED`, soft sag
 ## Used angles (avoid repeating too soon)
 
 - Idea → real web app; UI is ahead of tracking (draft 2026-10-20)
+- Journal not clinic; live dashboard UI, records not wired (draft 2026-10-21)

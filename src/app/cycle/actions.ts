@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { getSignedInUserId } from "@/lib/supabase/cycle-periods";
+import { getSignedInUserId } from "@/lib/supabase/auth";
 
 export type CycleActionState = {
   status: "idle" | "error" | "success";

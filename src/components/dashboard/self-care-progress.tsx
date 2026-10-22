@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Droplets,
@@ -17,10 +20,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
-  TRACKING_NOT_CONNECTED,
-  type MockSelfCarePillar,
+  buildSelfCareOverview,
+  formatLocalDate,
+  type SelfCareCheckin,
   type SelfCarePillarId,
-} from "@/lib/mock-data";
+} from "@/lib/self-care";
 import { cn } from "@/lib/utils";
 
 const pillarIcons: Record<SelfCarePillarId, LucideIcon> = {
@@ -31,29 +35,49 @@ const pillarIcons: Record<SelfCarePillarId, LucideIcon> = {
 };
 
 interface SelfCareProgressProps {
-  pillars: MockSelfCarePillar[];
+  signedIn: boolean;
+  checkins: SelfCareCheckin[];
 }
 
-export function SelfCareProgress({ pillars }: SelfCareProgressProps) {
+export function SelfCareProgress({ signedIn, checkins }: SelfCareProgressProps) {
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(formatLocalDate(new Date()));
+  }, []);
+
+  const pillars = buildSelfCareOverview(checkins, today || "1970-01-01");
+  const doneToday = pillars.filter((pillar) => pillar.doneToday).length;
+
   return (
     <Card className="animate-fade-up-delay-3 min-h-0">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
           <CardTitle className="text-xl md:text-xl">Self-care overview</CardTitle>
-          <Badge variant="outline">Not connected</Badge>
+          <Badge variant={signedIn && doneToday > 0 ? "sage" : "outline"}>
+            {signedIn
+              ? doneToday > 0
+                ? `${doneToday} of ${pillars.length} today`
+                : "Nothing marked today"
+              : "Sign in to save"}
+          </Badge>
         </div>
         <CardDescription>
-          Hydration, movement, sleep, and personal care at a glance.{" "}
-          {TRACKING_NOT_CONNECTED}
+          Hydration, movement, sleep, and personal care from your saved
+          check-ins. Bars count the last seven days only.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <ul
           className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
-          aria-label="Self-care pillars preview"
+          aria-label="Self-care pillars"
         >
           {pillars.map((pillar) => {
             const Icon = pillarIcons[pillar.id];
+            const percent =
+              pillar.lookbackDays === 0
+                ? 0
+                : Math.round((pillar.doneDays / pillar.lookbackDays) * 100);
             return (
               <li
                 key={pillar.id}
@@ -67,7 +91,11 @@ export function SelfCareProgress({ pillars }: SelfCareProgressProps) {
                     <Icon className="size-4" />
                   </span>
                   <span className="text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                    {pillar.statusLabel}
+                    {signedIn
+                      ? pillar.doneToday
+                        ? "Done today"
+                        : "Not yet"
+                      : "Not saved"}
                   </span>
                 </div>
                 <div className="min-w-0">
@@ -76,20 +104,30 @@ export function SelfCareProgress({ pillars }: SelfCareProgressProps) {
                     {pillar.detail}
                   </p>
                 </div>
-                <div
-                  className="mt-auto h-1 overflow-hidden rounded-full bg-secondary"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <div
-                    className="h-full rounded-full bg-sage/80 transition-[width] duration-700 motion-reduce:transition-none"
-                    style={{ width: `${pillar.previewLevel}%` }}
-                  />
-                </div>
-                <p className="sr-only">
-                  {pillar.name}: tracking not connected. Preview level{" "}
-                  {pillar.previewLevel} percent for layout only.
-                </p>
+                {signedIn ? (
+                  <div>
+                    <div
+                      className="h-1 overflow-hidden rounded-full bg-secondary"
+                      role="progressbar"
+                      aria-valuenow={pillar.doneDays}
+                      aria-valuemin={0}
+                      aria-valuemax={pillar.lookbackDays}
+                      aria-label={`${pillar.name} over the last ${pillar.lookbackDays} days`}
+                    >
+                      <div
+                        className="h-full rounded-full bg-sage/80 transition-[width] duration-700 motion-reduce:transition-none"
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {pillar.doneDays} of last {pillar.lookbackDays} days
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">
+                    Sign in to keep a real record.
+                  </p>
+                )}
               </li>
             );
           })}
@@ -103,7 +141,9 @@ export function SelfCareProgress({ pillars }: SelfCareProgressProps) {
           Open self-care
         </Link>
         <p className="text-xs text-muted-foreground">
-          Bars are visual placeholders, not live measurements.
+          {signedIn
+            ? "These counts come from dates you marked."
+            : "Nothing is stored until you have an account."}
         </p>
       </CardFooter>
     </Card>

@@ -6,23 +6,20 @@ import { SelfCareProgress } from "@/components/dashboard/self-care-progress";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { buildCycleOverview } from "@/lib/cycle";
-import {
-  mockDailyNote,
-  mockEmptyCycle,
-  mockSelfCarePillars,
-} from "@/lib/mock-data";
 import { getSignedInEmail } from "@/lib/supabase/auth";
 import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
+import { listSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
 
 export const metadata: Metadata = {
   title: "Dashboard",
-  description: "Your Flowelle daily overview — preview interface.",
+  description: "Your Flowelle daily overview.",
 };
 
 export default async function DashboardPage() {
   const email = await getSignedInEmail();
   const periods = email ? await listCyclePeriods() : [];
-  const cycle = email ? buildCycleOverview(periods) : mockEmptyCycle;
+  const checkins = email ? await listSelfCareCheckins() : [];
+  const cycle = buildCycleOverview(periods);
 
   return (
     <AppShellWithAuth>
@@ -34,12 +31,12 @@ export default async function DashboardPage() {
             cycle={cycle}
             signedIn={Boolean(email)}
           />
-          <DailyNoteCard note={mockDailyNote} />
+          <DailyNoteCard />
         </div>
 
         <QuickActions />
 
-        <SelfCareProgress pillars={mockSelfCarePillars} />
+        <SelfCareProgress signedIn={Boolean(email)} checkins={checkins} />
       </div>
     </AppShellWithAuth>
   );

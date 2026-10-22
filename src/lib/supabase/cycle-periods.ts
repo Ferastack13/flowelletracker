@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSignedInUserId } from "@/lib/supabase/auth";
 import type { CyclePeriod } from "@/lib/cycle";
 
 interface CyclePeriodRow {
@@ -13,12 +14,6 @@ function mapPeriod(row: CyclePeriodRow): CyclePeriod {
     startedOn: row.started_on,
     endedOn: row.ended_on,
   };
-}
-
-export async function getSignedInUserId(): Promise<string | null> {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  return typeof data?.claims?.sub === "string" ? data.claims.sub : null;
 }
 
 export async function listCyclePeriods(): Promise<CyclePeriod[]> {

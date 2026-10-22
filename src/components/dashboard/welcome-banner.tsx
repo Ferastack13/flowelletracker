@@ -30,8 +30,8 @@ export function WelcomeBanner({
         </div>
         <p className="shrink-0 text-xs leading-relaxed text-muted-foreground sm:max-w-[14rem] sm:text-right">
           {signedIn
-            ? "You are signed in. Cycle records and notes are still not saved."
-            : "You can preview without an account. Tracking is not connected yet."}
+            ? "You are signed in. Period dates and self-care check-ins save. Today’s note is general, not personalised."
+            : "You can preview without an account. Sign in to save period dates and self-care."}
         </p>
       </div>
     </section>

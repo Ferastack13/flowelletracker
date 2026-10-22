@@ -2,7 +2,7 @@
 
 **Your cycle. Your care. Your rhythm.**
 
-Flowelle is a premium women’s menstrual health and self-care web application. This repository currently ships a production-minded UI preview: landing page, application shell, dashboard, and placeholder routes. Authentication, persistence, predictions, and personalised notes are not implemented yet.
+Flowelle is a premium women’s menstrual health and self-care web application. You can sign in with an email link, save period dates, mark self-care check-ins, and read a general daily note. Symptom logging, predictions, and personalised notes are not implemented yet.
 
 ## Stack
 
@@ -11,7 +11,7 @@ Flowelle is a premium women’s menstrual health and self-care web application. 
 - Tailwind CSS
 - shadcn-style UI primitives (customised to brand)
 - Lucide React
-- Supabase planned for auth and PostgreSQL
+- Supabase for auth and PostgreSQL
 
 ## Brand
 
@@ -23,6 +23,8 @@ Flowelle is a premium women’s menstrual health and self-care web application. 
 | Soft sage   | `#A5A995` |
 
 ## Getting started
+
+Copy `.env.example` to `.env.local` and add your Supabase URL and publishable key.
 
 ```bash
 npm install
@@ -45,5 +47,5 @@ Fonts load via Google Fonts stylesheets (Cormorant Garamond + Source Sans 3). `n
 
 ## Notes
 
-- Sample dashboard content lives in `src/lib/mock-data.ts` and is labelled as preview-only.
-- The dashboard empty cycle state is intentional: no real user records exist yet.
+- Landing marketing figures live in `src/lib/mock-data.ts` and are labelled as a preview sample.
+- Period dates and self-care check-ins save for signed-in users. Today’s note is general for the date, not personalised.

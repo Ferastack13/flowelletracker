@@ -1,24 +1,24 @@
 import type { Metadata } from "next";
-import { HeartPulse } from "lucide-react";
-import { PagePlaceholder } from "@/components/layout/page-placeholder";
+import { SelfCareTracker } from "@/app/self-care/self-care-tracker";
+import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
+import { getSignedInEmail } from "@/lib/supabase/auth";
+import { listSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
 
 export const metadata: Metadata = {
   title: "Self-care",
-  description: "Build self-care habits with Flowelle — coming soon.",
+  description: "Log hydration, movement, sleep, and personal care in Flowelle.",
 };
 
-export default function SelfCarePage() {
+export default async function SelfCarePage() {
+  const email = await getSignedInEmail();
+  const checkins = email ? await listSelfCareCheckins() : [];
+
   return (
-    <PagePlaceholder
+    <AppShellWithAuth
       title="Self-care"
-      description="Gentle habits and rituals that move with your energy through the month."
-      icon={HeartPulse}
-      upcoming={[
-        "Daily habit check-ins",
-        "Custom ritual lists",
-        "Streaks that feel encouraging, not punishing",
-        "Phase-aware suggestions (future)",
-      ]}
-    />
+      description="Mark the care you already gave yourself. Flowelle does not score or streak these yet."
+    >
+      <SelfCareTracker signedIn={Boolean(email)} checkins={checkins} />
+    </AppShellWithAuth>
   );
 }

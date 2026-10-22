@@ -10,23 +10,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  MOCK_DATA_NOTICE,
-  type MockCycleOverview,
-} from "@/lib/mock-data";
 import type { CycleOverview } from "@/lib/cycle";
 import { cn } from "@/lib/utils";
 
 interface CycleOverviewCardProps {
-  cycle: CycleOverview | MockCycleOverview;
-  /** When true, shows a preview badge (marketing / sample UI). */
-  isPreviewSample?: boolean;
+  cycle: CycleOverview;
   signedIn?: boolean;
 }
 
 export function CycleOverviewCard({
   cycle,
-  isPreviewSample = false,
   signedIn = false,
 }: CycleOverviewCardProps) {
   if (!cycle.hasCycleData) {
@@ -87,11 +80,6 @@ export function CycleOverviewCard({
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle className="text-xl md:text-xl">Cycle overview</CardTitle>
-          {isPreviewSample ? (
-            <Badge variant="outline" title={MOCK_DATA_NOTICE}>
-              Preview sample
-            </Badge>
-          ) : null}
         </div>
         <CardDescription>
           Counted from your last logged start. This is not a medical prediction.
@@ -139,7 +127,6 @@ export function CycleOverviewCard({
           <p className="text-sm text-muted-foreground">
             Last logged start:{" "}
             <time dateTime={cycle.lastPeriodStart}>{cycle.lastPeriodStart}</time>
-            {isPreviewSample ? " (preview sample)" : null}
           </p>
         ) : null}
       </CardContent>

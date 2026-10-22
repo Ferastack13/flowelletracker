@@ -31,7 +31,7 @@ export function PagePlaceholder({
             <EmptyState
               icon={<Icon className="size-5" aria-hidden="true" />}
               title={`${title} is not connected yet`}
-              description="Layout and navigation are in place. Logging, predictions, and saved records will appear here once backend features are implemented — nothing is functional yet."
+              description="Guides are not published yet. Period dates, self-care check-ins, and today’s general note live on their own pages."
             />
           </CardContent>
         </Card>
