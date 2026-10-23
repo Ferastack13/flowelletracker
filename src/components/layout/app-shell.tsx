@@ -69,7 +69,8 @@ export function AppShell({
             <div className="rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3.5">
               <p className="font-serif text-sm text-plum">Private by design</p>
               <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
-                Sign in from the login page to save period dates and self-care.
+                Sign in from the login page to save period dates, symptoms, and
+                self-care.
               </p>
             </div>
           )}
@@ -141,7 +142,8 @@ export function AppShell({
               {accountPanel ?? (
                 <div className="rounded-xl border border-border/60 bg-muted/40 p-3.5">
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    Preview mode — sign in to save period dates and self-care.
+                    Preview mode — sign in to save period dates, symptoms, and
+                    self-care.
                   </p>
                 </div>
               )}

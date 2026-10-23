@@ -37,10 +37,10 @@ const actions: QuickAction[] = [
   {
     id: "symptoms",
     label: "Record symptoms",
-    description: "Logging not available yet",
+    description: "Open the cycle tracker",
     icon: CalendarDays,
-    available: false,
-    unavailableReason: "Symptom logging is not implemented yet",
+    href: "/cycle#symptoms",
+    available: true,
   },
   {
     id: "self-care",
@@ -66,7 +66,7 @@ export function QuickActions() {
           Quick actions
         </h2>
         <p className="text-xs text-muted-foreground">
-          Shortcuts that navigate where features exist; others stay unavailable.
+          Shortcuts into the records you can keep.
         </p>
       </div>
       <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3">

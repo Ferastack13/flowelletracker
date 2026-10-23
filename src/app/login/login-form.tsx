@@ -69,7 +69,11 @@ export function LoginForm() {
         />
       </div>
       <Button type="submit" className="w-full" disabled={status === "sending"}>
-        {status === "sending" ? "Sending link…" : "Email me a sign-in link"}
+        {status === "sending"
+          ? "Sending link…"
+          : status === "sent"
+            ? "Send another link"
+            : "Email me a sign-in link"}
       </Button>
       {message ? (
         <p
@@ -84,8 +88,9 @@ export function LoginForm() {
         </p>
       ) : null}
       <p className="text-xs leading-relaxed text-muted-foreground">
-        Signing in creates an account. Period dates and self-care check-ins
-        then save to that account. Today’s note is general, not personalised.
+        Signing in creates an account. Period dates, symptoms, and self-care
+        check-ins then save to that account. Today’s note is general, not
+        personalised.
       </p>
     </form>
   );

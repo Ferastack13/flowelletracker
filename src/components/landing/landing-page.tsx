@@ -23,7 +23,7 @@ const features = [
   {
     title: "Cycle clarity",
     description:
-      "Log period dates in a calm interface designed for understanding — not alarmist predictions. Symptom logging comes later.",
+      "Log period dates and everyday symptoms in a calm interface designed for understanding — not alarmist predictions.",
     icon: Waves,
   },
   {
@@ -133,8 +133,8 @@ export function LandingPage() {
                 </Link>
               </div>
               <p className="mt-4 text-xs text-muted-foreground">
-                Sign in to save period dates and self-care. Today’s note is
-                general. Symptom logging is not live yet.
+                Sign in to save period dates, symptoms, and self-care. Today’s
+                note is general.
               </p>
             </div>
             <ProductPreview />
@@ -221,7 +221,7 @@ export function LandingPage() {
               <CardContent className="space-y-4 p-6">
                 {[
                   "Empty-state clarity when no cycle data exists",
-                  "Period logging and self-care check-ins are ready; symptom logging is not",
+                  "Period dates, symptom notes, and self-care check-ins save to your account",
                   "Mobile navigation that stays reachable and calm",
                 ].map((item) => (
                   <p
@@ -259,8 +259,9 @@ export function LandingPage() {
               <p className="mt-4 text-muted-foreground leading-relaxed">
                 Flowelle is being built with privacy as a foundation. Cycle
                 details should never feel exposed or performative. Sign-in,
-                period dates, and self-care check-ins save privately to your
-                account. Symptom logs and personalised notes are not stored yet.
+                period dates, symptom notes, and self-care check-ins save
+                privately to your account. Personalised notes are not stored
+                yet.
               </p>
             </div>
           </div>
@@ -277,8 +278,8 @@ export function LandingPage() {
             Begin in your space
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-muted-foreground">
-            Sign in to save period dates and self-care. Today’s note is already
-            here. Personalised notes are not live yet.
+            Sign in to save period dates, symptoms, and self-care. Today’s note
+            is already here. Personalised notes are not live yet.
           </p>
           <Link
             href="/dashboard"

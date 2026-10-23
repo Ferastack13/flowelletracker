@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { Logo } from "@/components/brand/logo";
 import { LoginForm } from "@/app/login/login-form";
@@ -11,14 +12,11 @@ export const metadata: Metadata = {
   description: "Sign in to Flowelle with an email link.",
 };
 
-export default async function LoginPage({
+export default function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const params = await searchParams;
-  const callbackFailed = params.error === "callback";
-
   return (
     <div className="flex min-h-dvh flex-col px-4 py-8 sm:px-6">
       <header className="mx-auto flex w-full max-w-md items-center justify-between">
@@ -40,20 +38,33 @@ export default async function LoginPage({
               Sign in to your space
             </CardTitle>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              We send a one-time link to your email. No password. Period dates
-              and self-care check-ins save after you sign in.
+              We send a one-time link to your email. No password. Period dates,
+              symptoms, and self-care check-ins save after you sign in.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
-            {callbackFailed ? (
-              <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
-                That sign-in link could not be completed. Request a new one.
-              </p>
-            ) : null}
+            <Suspense fallback={null}>
+              <LoginCallbackNotice searchParams={searchParams} />
+            </Suspense>
             <LoginForm />
           </CardContent>
         </Card>
       </main>
     </div>
+  );
+}
+
+async function LoginCallbackNotice({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const params = await searchParams;
+  if (params.error !== "callback") return null;
+
+  return (
+    <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+      That sign-in link could not be completed. Request a new one.
+    </p>
   );
 }

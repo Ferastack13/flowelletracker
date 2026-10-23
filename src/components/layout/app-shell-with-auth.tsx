@@ -1,4 +1,8 @@
-import { AccountPanel } from "@/components/auth/account-panel";
+import { Suspense } from "react";
+import {
+  AccountPanel,
+  AccountPanelFallback,
+} from "@/components/auth/account-panel";
 import { AppShell } from "@/components/layout/app-shell";
 
 interface AppShellWithAuthProps {
@@ -7,7 +11,7 @@ interface AppShellWithAuthProps {
   description?: string;
 }
 
-export async function AppShellWithAuth({
+export function AppShellWithAuth({
   children,
   title,
   description,
@@ -16,7 +20,11 @@ export async function AppShellWithAuth({
     <AppShell
       title={title}
       description={description}
-      accountPanel={<AccountPanel />}
+      accountPanel={
+        <Suspense fallback={<AccountPanelFallback />}>
+          <AccountPanel />
+        </Suspense>
+      }
     >
       {children}
     </AppShell>

@@ -63,16 +63,24 @@ export async function savePeriodEnd(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("cycle_periods")
     .update({ ended_on: endedOn, updated_at: new Date().toISOString() })
     .eq("id", id)
-    .eq("user_id", userId);
+    .eq("user_id", userId)
+    .select("id");
 
   if (error) {
     return {
       status: "error",
       message: "The end date could not be saved. It must be on or after the start.",
+    };
+  }
+
+  if (!data?.length) {
+    return {
+      status: "error",
+      message: "That period could not be updated. Refresh and try again.",
     };
   }
 

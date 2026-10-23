@@ -1,24 +1,56 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { CycleTracker } from "@/app/cycle/cycle-tracker";
+import { SymptomLog } from "@/app/cycle/symptom-log";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
+import { buildCycleOverview } from "@/lib/cycle";
 import { getSignedInEmail } from "@/lib/supabase/auth";
 import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
+import { listSymptomLogs } from "@/lib/supabase/symptom-logs";
 
 export const metadata: Metadata = {
   title: "Cycle Tracker",
-  description: "Log period start and end dates in Flowelle.",
+  description: "Log period dates and symptoms in Flowelle.",
 };
 
-export default async function CyclePage() {
-  const email = await getSignedInEmail();
-  const periods = email ? await listCyclePeriods() : [];
-
+export default function CyclePage() {
   return (
     <AppShellWithAuth
       title="Cycle Tracker"
-      description="Record the dates you already know. Flowelle does not predict your next period."
+      description="Record the dates and symptoms you already know. Next-period windows are approximate and never a diagnosis."
     >
-      <CycleTracker signedIn={Boolean(email)} periods={periods} />
+      <Suspense fallback={<SessionRecordsFallback label="Loading your cycle log…" />}>
+        <CycleSession />
+      </Suspense>
     </AppShellWithAuth>
+  );
+}
+
+async function CycleSession() {
+  const email = await getSignedInEmail();
+  const periods = email ? await listCyclePeriods() : [];
+  const symptoms = email ? await listSymptomLogs() : [];
+  const overview = buildCycleOverview(periods);
+
+  return (
+    <div className="flex flex-col gap-6">
+      <CycleTracker
+        signedIn={Boolean(email)}
+        periods={periods}
+        overview={overview}
+      />
+      {email ? <SymptomLog entries={symptoms} /> : null}
+    </div>
+  );
+}
+
+function SessionRecordsFallback({ label }: { label: string }) {
+  return (
+    <div className="rounded-2xl border border-border/60 bg-card/80 px-5 py-8">
+      <p className="font-serif text-lg text-plum">{label}</p>
+      <p className="mt-2 text-sm text-muted-foreground">
+        Checking whether you are signed in.
+      </p>
+    </div>
   );
 }

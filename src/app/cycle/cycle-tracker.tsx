@@ -13,7 +13,12 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { CyclePeriod } from "@/lib/cycle";
+import { CycleEstimateSummary } from "@/components/cycle/cycle-estimate-summary";
+import {
+  intervalStatusLabel,
+  type CycleOverview,
+  type CyclePeriod,
+} from "@/lib/cycle";
 import { cn } from "@/lib/utils";
 
 const initialState: CycleActionState = { status: "idle", message: "" };
@@ -21,9 +26,14 @@ const initialState: CycleActionState = { status: "idle", message: "" };
 interface CycleTrackerProps {
   signedIn: boolean;
   periods: CyclePeriod[];
+  overview: CycleOverview;
 }
 
-export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
+export function CycleTracker({
+  signedIn,
+  periods,
+  overview,
+}: CycleTrackerProps) {
   const [startState, startAction, startPending] = useActionState(
     logPeriodStart,
     initialState,
@@ -39,8 +49,8 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
         <CardHeader>
           <CardTitle className="text-xl md:text-xl">Sign in to log</CardTitle>
           <CardDescription>
-            Period dates are stored only for your account. Previewing the
-            dashboard does not save anything.
+            Period dates and symptom notes are stored only for your account.
+            Previewing the dashboard does not save anything.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -52,13 +62,19 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
     );
   }
 
+  const historyById = new Map(
+    overview.history.map((item) => [item.period.id, item]),
+  );
+
   return (
+    <div className="flex flex-col gap-6">
     <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
       <Card>
         <CardHeader>
           <CardTitle className="text-xl md:text-xl">Log a period start</CardTitle>
           <CardDescription>
-            This is a date you record — not a prediction of what comes next.
+            Dates you record. Next-period windows use these starts, not a
+            standard 28-day cycle.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -90,8 +106,8 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
         <CardHeader>
           <CardTitle className="text-xl md:text-xl">Recent entries</CardTitle>
           <CardDescription>
-            Add an end date when your period finishes. Symptoms are not logged
-            yet.
+            Add an end date when your period finishes. Cycle length is counted
+            from this start to the next start.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,7 +117,9 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
             </p>
           ) : (
             <ul className="space-y-4">
-              {periods.map((period) => (
+              {periods.map((period) => {
+                const item = historyById.get(period.id);
+                return (
                 <li
                   key={period.id}
                   className="rounded-lg border border-border/70 bg-muted/30 p-3"
@@ -115,7 +133,18 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
                       Ended{" "}
                       <time dateTime={period.endedOn}>{period.endedOn}</time>
                     </p>
+                  ) : null}
+                  {item?.lengthDays != null && item.intervalStatus ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Cycle to next start: {item.lengthDays} days ·{" "}
+                      {intervalStatusLabel(item.intervalStatus)}
+                    </p>
                   ) : (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      No later start recorded yet, so this cycle is still open.
+                    </p>
+                  )}
+                  {!period.endedOn ? (
                     <form action={endAction} className="mt-3 flex flex-wrap items-end gap-2">
                       <input type="hidden" name="periodId" value={period.id} />
                       <div className="space-y-1">
@@ -134,9 +163,10 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
                         Save end
                       </Button>
                     </form>
-                  )}
+                  ) : null}
                 </li>
-              ))}
+                );
+              })}
             </ul>
           )}
           {endState.message ? (
@@ -151,6 +181,19 @@ export function CycleTracker({ signedIn, periods }: CycleTrackerProps) {
               {endState.message}
             </p>
           ) : null}
+        </CardContent>
+      </Card>
+    </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl md:text-xl">Recorded cycles</CardTitle>
+          <CardDescription>
+            Lengths are the days between consecutive starts. The same numbers
+            appear on the dashboard.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <CycleEstimateSummary estimate={overview.estimate} />
         </CardContent>
       </Card>
     </div>
