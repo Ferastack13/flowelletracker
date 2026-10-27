@@ -16,6 +16,7 @@ describe("buildPersonalExport", () => {
         displayName: "Ada",
         selfCareIntention: "Rest",
         showCycleEstimate: false,
+        photoPath: "someone/photo.jpg",
       },
       cyclePeriods: [
         {
@@ -51,6 +52,9 @@ describe("buildPersonalExport", () => {
     assert.equal(isEmpty, false);
     assert.equal(document.profile.displayName, "Ada");
     assert.equal(document.profile.showNextPeriodWindow, false);
+    assert.equal(document.profile.hasProfilePhoto, true);
+    assert.equal("photoPath" in document.profile, false);
+    assert.equal("photoUrl" in document.profile, false);
     assert.equal(document.cyclePeriods[0]?.startedOn, "2026-10-01");
     assert.equal("user_id" in document.cyclePeriods[0]!, false);
     assert.equal("userId" in document.symptomLogs[0]!, false);

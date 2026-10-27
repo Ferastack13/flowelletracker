@@ -6,12 +6,16 @@ export interface UserProfile {
   displayName: string;
   selfCareIntention: string;
   showCycleEstimate: boolean;
+  photoPath: string | null;
+  photoUrl: string | null;
 }
 
 export const emptyProfile: UserProfile = {
   displayName: "",
   selfCareIntention: "",
   showCycleEstimate: true,
+  photoPath: null,
+  photoUrl: null,
 };
 
 export function normalizeOptionalText(
@@ -62,6 +66,8 @@ export function mergeProfileFields(
     displayName: fields.displayName ?? current.displayName,
     selfCareIntention: fields.selfCareIntention ?? current.selfCareIntention,
     showCycleEstimate: fields.showCycleEstimate ?? current.showCycleEstimate,
+    photoPath: fields.photoPath === undefined ? current.photoPath : fields.photoPath,
+    photoUrl: fields.photoUrl === undefined ? current.photoUrl : fields.photoUrl,
   };
 }
 
@@ -79,6 +85,8 @@ export function parseProfileForm(input: {
       displayName: identity.displayName,
       selfCareIntention: identity.selfCareIntention,
       showCycleEstimate: input.showCycleEstimate,
+      photoPath: null,
+      photoUrl: null,
     },
   };
 }

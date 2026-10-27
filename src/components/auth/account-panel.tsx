@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { signOut } from "@/app/auth/actions";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/server";
+import { getSignedInEmail } from "@/lib/supabase/auth";
+import { getProfile } from "@/lib/supabase/profiles";
 import { cn } from "@/lib/utils";
 
 export function AccountPanelFallback() {
@@ -17,10 +19,7 @@ export function AccountPanelFallback() {
 }
 
 export async function AccountPanel() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  const email =
-    typeof data?.claims?.email === "string" ? data.claims.email : null;
+  const email = await getSignedInEmail();
 
   if (!email) {
     return (
@@ -43,13 +42,26 @@ export async function AccountPanel() {
     );
   }
 
+  const profile = await getProfile();
+
   return (
     <div className="rounded-xl border border-border/60 bg-muted/40 px-3.5 py-3.5">
-      <p className="font-serif text-sm text-plum">Signed in</p>
-      <p className="mt-1.5 truncate text-[11px] text-muted-foreground" title={email}>
-        {email}
-      </p>
-      <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+      <div className="flex items-center gap-3">
+        <ProfileAvatar
+          name={profile.displayName}
+          photoUrl={profile.photoUrl}
+          size="sm"
+        />
+        <div className="min-w-0">
+          <p className="truncate font-serif text-sm text-plum">
+            {profile.displayName || "Signed in"}
+          </p>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground" title={email}>
+            {email}
+          </p>
+        </div>
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
         Period dates, symptoms, and self-care check-ins save to your account.
         Today’s note is general, not personalised.
       </p>

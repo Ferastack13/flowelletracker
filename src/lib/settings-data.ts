@@ -36,6 +36,7 @@ export interface PersonalExport {
     displayName: string;
     selfCareIntention: string;
     showNextPeriodWindow: boolean;
+    hasProfilePhoto: boolean;
   };
   cyclePeriods: ExportPeriod[];
   symptomLogs: ExportSymptom[];
@@ -73,6 +74,7 @@ export function buildPersonalExport(input: {
     displayName: string;
     selfCareIntention: string;
     showCycleEstimate: boolean;
+    photoPath?: string | null;
   };
   cyclePeriods: Array<Record<string, unknown>>;
   symptomLogs: Array<Record<string, unknown>>;
@@ -121,6 +123,7 @@ export function buildPersonalExport(input: {
       displayName: input.profile.displayName,
       selfCareIntention: input.profile.selfCareIntention,
       showNextPeriodWindow: input.profile.showCycleEstimate,
+      hasProfilePhoto: Boolean(input.profile.photoPath),
     },
     cyclePeriods,
     symptomLogs,

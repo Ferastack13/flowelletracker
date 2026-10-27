@@ -100,9 +100,11 @@ describe("mergeProfileFields", () => {
   it("keeps the estimate preference when only identity is saved", () => {
     const merged = mergeProfileFields(
       {
+        ...emptyProfile,
         displayName: "Ada",
         selfCareIntention: "Rest",
         showCycleEstimate: false,
+        photoPath: "user/photo.jpg",
       },
       { displayName: "Nia", selfCareIntention: "Move gently" },
     );
@@ -110,11 +112,13 @@ describe("mergeProfileFields", () => {
     assert.equal(merged.displayName, "Nia");
     assert.equal(merged.selfCareIntention, "Move gently");
     assert.equal(merged.showCycleEstimate, false);
+    assert.equal(merged.photoPath, "user/photo.jpg");
   });
 
   it("keeps identity when only the estimate preference changes", () => {
     const merged = mergeProfileFields(
       {
+        ...emptyProfile,
         displayName: "Ada",
         selfCareIntention: "Rest",
         showCycleEstimate: true,
@@ -135,5 +139,6 @@ describe("mergeProfileFields", () => {
     assert.equal(merged.displayName, "Ada");
     assert.equal(merged.selfCareIntention, "");
     assert.equal(merged.showCycleEstimate, true);
+    assert.equal(merged.photoPath, null);
   });
 });

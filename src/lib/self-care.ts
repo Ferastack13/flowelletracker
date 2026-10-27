@@ -118,6 +118,31 @@ export function checkinForDate(
   );
 }
 
+export function hasAnySelfCarePillar(checkin: SelfCareCheckin): boolean {
+  return (
+    checkin.hydration ||
+    checkin.movement ||
+    checkin.sleep ||
+    checkin.personalCare
+  );
+}
+
+export function toggleSelfCarePillarState(
+  current: SelfCareCheckin,
+  pillarId: SelfCarePillarId,
+): SelfCareCheckin {
+  switch (pillarId) {
+    case "hydration":
+      return { ...current, hydration: !current.hydration };
+    case "movement":
+      return { ...current, movement: !current.movement };
+    case "sleep":
+      return { ...current, sleep: !current.sleep };
+    case "personal-care":
+      return { ...current, personalCare: !current.personalCare };
+  }
+}
+
 export function pillarDone(
   checkin: SelfCareCheckin,
   pillarId: SelfCarePillarId,

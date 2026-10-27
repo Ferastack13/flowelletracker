@@ -8,9 +8,10 @@ import {
   addCalendarDays,
   emptySelfCareCheckin,
   formatUtcDate,
+  hasAnySelfCarePillar,
   isSelfCarePillarId,
   pillarDone,
-  type SelfCareCheckin,
+  toggleSelfCarePillarState,
   type SelfCarePillarId,
 } from "@/lib/self-care";
 
@@ -37,31 +38,6 @@ function isAllowedCheckinDate(checkedOn: string): boolean {
   return checkedOn <= latest;
 }
 
-function nextCheckin(
-  current: SelfCareCheckin,
-  pillarId: SelfCarePillarId,
-): SelfCareCheckin {
-  switch (pillarId) {
-    case "hydration":
-      return { ...current, hydration: !current.hydration };
-    case "movement":
-      return { ...current, movement: !current.movement };
-    case "sleep":
-      return { ...current, sleep: !current.sleep };
-    case "personal-care":
-      return { ...current, personalCare: !current.personalCare };
-  }
-}
-
-function hasAnyPillar(checkin: SelfCareCheckin): boolean {
-  return (
-    checkin.hydration ||
-    checkin.movement ||
-    checkin.sleep ||
-    checkin.personalCare
-  );
-}
-
 export async function toggleSelfCarePillar(
   _previous: SelfCareActionState,
   formData: FormData,
@@ -83,10 +59,10 @@ export async function toggleSelfCarePillar(
   const existing =
     (await getSelfCareCheckinForDate(checkedOn)) ??
     emptySelfCareCheckin(checkedOn);
-  const next = nextCheckin(existing, pillar);
+  const next = toggleSelfCarePillarState(existing, pillar);
   const supabase = await createClient();
 
-  if (!hasAnyPillar(next)) {
+  if (!hasAnySelfCarePillar(next)) {
     if (!existing.id) {
       return { status: "success", message: "Check-in cleared." };
     }

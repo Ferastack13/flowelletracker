@@ -1,10 +1,22 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { randomUUID } from "node:crypto";
 import { getSignedInUserId } from "@/lib/supabase/auth";
-import { getProfile, saveProfileFields } from "@/lib/supabase/profiles";
+import {
+  getProfile,
+  removeOwnProfilePhotos,
+  removeOwnedPhotoObject,
+  savePhotoPath,
+  saveProfileFields,
+} from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
 import { parseProfileIdentity } from "@/lib/profile";
+import {
+  PROFILE_PHOTO_BUCKET,
+  buildOwnedPhotoPath,
+  inspectProfilePhoto,
+} from "@/lib/profile-photo";
 import {
   buildPersonalExport,
   interpretDeletion,
@@ -28,6 +40,8 @@ function revalidateSettingsSurfaces() {
   revalidatePath("/settings");
   revalidatePath("/dashboard");
   revalidatePath("/cycle");
+  revalidatePath("/self-care");
+  revalidatePath("/learn");
 }
 
 async function requireUserId(): Promise<string | null> {
@@ -93,6 +107,104 @@ export async function saveCycleEstimatePreference(
         ? "The next-period window will show when enough starts are recorded."
         : "The next-period window is hidden. Your logged dates are unchanged.",
   };
+}
+
+export async function uploadProfilePhoto(
+  _previous: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { status: "error", message: "Sign in to change your photo." };
+  }
+
+  const file = formData.get("photo");
+  if (!(file instanceof File)) {
+    return { status: "error", message: "Choose a photo to upload." };
+  }
+
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const inspected = inspectProfilePhoto({
+    userId,
+    bytes,
+    declaredType: file.type,
+    declaredSize: file.size,
+  });
+  if (!inspected.ok) {
+    return { status: "error", message: inspected.message };
+  }
+
+  const nextPath = buildOwnedPhotoPath(userId, randomUUID(), inspected.kind);
+  if (!nextPath) {
+    return { status: "error", message: "That photo could not be stored." };
+  }
+
+  const current = await getProfile();
+  const supabase = await createClient();
+  const uploaded = await supabase.storage
+    .from(PROFILE_PHOTO_BUCKET)
+    .upload(nextPath, bytes, {
+      contentType:
+        inspected.kind === "jpeg"
+          ? "image/jpeg"
+          : inspected.kind === "png"
+            ? "image/png"
+            : "image/webp",
+      upsert: false,
+    });
+
+  if (uploaded.error) {
+    return {
+      status: "error",
+      message: "That photo could not be uploaded. Try again.",
+    };
+  }
+
+  const saved = await savePhotoPath(nextPath);
+  if (!saved.ok) {
+    await removeOwnedPhotoObject(nextPath, userId);
+    return {
+      status: "error",
+      message: saved.error ?? "That photo could not be saved. Try again.",
+    };
+  }
+
+  if (current.photoPath && current.photoPath !== nextPath) {
+    await removeOwnedPhotoObject(current.photoPath, userId);
+  }
+
+  revalidateSettingsSurfaces();
+  return { status: "success", message: "Profile photo saved." };
+}
+
+export async function removeProfilePhoto(): Promise<SettingsActionState> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { status: "error", message: "Sign in to remove your photo." };
+  }
+
+  const current = await getProfile();
+  const saved = await savePhotoPath(null);
+  if (!saved.ok) {
+    return {
+      status: "error",
+      message: saved.error ?? "That photo could not be removed. Try again.",
+    };
+  }
+
+  if (current.photoPath) {
+    const removed = await removeOwnedPhotoObject(current.photoPath, userId);
+    if (!removed) {
+      return {
+        status: "error",
+        message:
+          "The photo was cleared from your profile, but the file may still be there. Try again.",
+      };
+    }
+  }
+
+  revalidateSettingsSurfaces();
+  return { status: "success", message: "Profile photo removed." };
 }
 
 export async function exportMyData(
@@ -209,6 +321,15 @@ export async function deleteSavedRecords(
     return {
       status: "error",
       message: "Some records are still there. Refresh and try again.",
+    };
+  }
+
+  const photosRemoved = await removeOwnProfilePhotos(userId);
+  if (!photosRemoved) {
+    return {
+      status: "error",
+      message:
+        "Records were removed, but the profile photo could not be cleared. Try again.",
     };
   }
 

@@ -1,8 +1,14 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import Link from "next/link";
-import { logPeriodStart, savePeriodEnd, type CycleActionState } from "@/app/cycle/actions";
+import {
+  deletePeriodRecord,
+  logPeriodStart,
+  savePeriodEnd,
+  updatePeriodRecord,
+  type CycleActionState,
+} from "@/app/cycle/actions";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -44,6 +50,16 @@ export function CycleTracker({
     savePeriodEnd,
     initialState,
   );
+  const [updateState, updateAction, updatePending] = useActionState(
+    updatePeriodRecord,
+    initialState,
+  );
+  const [deleteState, deleteAction, deletePending] = useActionState(
+    deletePeriodRecord,
+    initialState,
+  );
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
 
   if (!signedIn) {
     return (
@@ -146,43 +162,128 @@ export function CycleTracker({
                       No later start recorded yet, so this cycle is still open.
                     </p>
                   )}
-                  {!period.endedOn ? (
-                    <form action={endAction} className="mt-3 flex flex-wrap items-end gap-2">
+                  {editingId === period.id ? (
+                    <form action={updateAction} className="mt-3 space-y-3">
                       <input type="hidden" name="periodId" value={period.id} />
-                      <div className="space-y-1">
-                        <Label htmlFor={`endedOn-${period.id}`} className="text-xs">
-                          End date
-                        </Label>
-                        <Input
-                          id={`endedOn-${period.id}`}
-                          name="endedOn"
-                          type="date"
-                          min={period.startedOn}
-                          required
-                        />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <div className="space-y-1">
+                          <Label htmlFor={`startedOn-${period.id}`} className="text-xs">
+                            Start date
+                          </Label>
+                          <Input
+                            id={`startedOn-${period.id}`}
+                            name="startedOn"
+                            type="date"
+                            defaultValue={period.startedOn}
+                            required
+                            disabled={updatePending}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label htmlFor={`editEndedOn-${period.id}`} className="text-xs">
+                            End date
+                          </Label>
+                          <Input
+                            id={`editEndedOn-${period.id}`}
+                            name="endedOn"
+                            type="date"
+                            defaultValue={period.endedOn ?? ""}
+                            min={period.startedOn}
+                            disabled={updatePending}
+                          />
+                        </div>
                       </div>
-                      <Button type="submit" size="sm" variant="outline" disabled={endPending}>
-                        Save end
-                      </Button>
+                      <div className="flex flex-wrap gap-2">
+                        <Button type="submit" size="sm" disabled={updatePending}>
+                          {updatePending ? "Saving…" : "Save changes"}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          disabled={updatePending}
+                          onClick={() => setEditingId(null)}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
                     </form>
-                  ) : null}
+                  ) : (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {!period.endedOn ? (
+                        <form action={endAction} className="flex flex-wrap items-end gap-2">
+                          <input type="hidden" name="periodId" value={period.id} />
+                          <div className="space-y-1">
+                            <Label htmlFor={`endedOn-${period.id}`} className="text-xs">
+                              End date
+                            </Label>
+                            <Input
+                              id={`endedOn-${period.id}`}
+                              name="endedOn"
+                              type="date"
+                              min={period.startedOn}
+                              required
+                              disabled={endPending}
+                            />
+                          </div>
+                          <Button type="submit" size="sm" variant="outline" disabled={endPending}>
+                            Save end
+                          </Button>
+                        </form>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        disabled={updatePending || deletePending}
+                        onClick={() => {
+                          setEditingId(period.id);
+                          setConfirmingId(null);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                      {confirmingId === period.id ? (
+                        <form action={deleteAction}>
+                          <input type="hidden" name="periodId" value={period.id} />
+                          <input type="hidden" name="confirm" value="yes" />
+                          <Button type="submit" size="sm" variant="outline" disabled={deletePending}>
+                            {deletePending ? "Removing…" : "Confirm remove"}
+                          </Button>
+                        </form>
+                      ) : (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          disabled={deletePending}
+                          onClick={() => setConfirmingId(period.id)}
+                        >
+                          Remove
+                        </Button>
+                      )}
+                    </div>
+                  )}
                 </li>
                 );
               })}
             </ul>
           )}
-          {endState.message ? (
-            <p
-              className={
-                endState.status === "error"
-                  ? "mt-3 text-sm text-destructive"
-                  : "mt-3 text-sm text-muted-foreground"
-              }
-              role="status"
-            >
-              {endState.message}
-            </p>
-          ) : null}
+          {[endState, updateState, deleteState]
+            .filter((state) => state.message)
+            .map((state) => (
+              <p
+                key={`${state.status}-${state.message}`}
+                className={
+                  state.status === "error"
+                    ? "mt-3 text-sm text-destructive"
+                    : "mt-3 text-sm text-muted-foreground"
+                }
+                role="status"
+              >
+                {state.message}
+              </p>
+            ))}
         </CardContent>
       </Card>
     </div>

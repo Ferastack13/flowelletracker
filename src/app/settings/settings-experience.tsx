@@ -38,7 +38,8 @@ import {
   SELF_CARE_INTENTION_MAX,
   type UserProfile,
 } from "@/lib/profile";
-import { displayInitials } from "@/lib/settings-data";
+import { ProfilePhotoEditor } from "@/app/settings/profile-photo-editor";
+import { ProfileAvatar } from "@/components/profile/profile-avatar";
 import { cn } from "@/lib/utils";
 
 const initialState: SettingsActionState = { status: "idle", message: "" };
@@ -163,12 +164,10 @@ export function SettingsExperience({
         <Card id="profile" className="scroll-mt-24">
           <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex min-w-0 items-center gap-4">
-              <div
-                className="flex size-14 shrink-0 items-center justify-center rounded-full bg-plum text-sm font-medium tracking-wide text-ivory"
-                aria-hidden="true"
-              >
-                {displayInitials(displayName)}
-              </div>
+              <ProfileAvatar
+                name={displayName}
+                photoUrl={profile.photoUrl}
+              />
               <div className="min-w-0">
                 <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
                   Hello
@@ -182,7 +181,11 @@ export function SettingsExperience({
               </div>
             </div>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-6">
+            <ProfilePhotoEditor
+              displayName={displayName}
+              photoUrl={profile.photoUrl}
+            />
             <form
               action={saveAction}
               className="space-y-5"

@@ -1,19 +1,47 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/auth";
 import { emptyProfile, mergeProfileFields, type UserProfile } from "@/lib/profile";
+import {
+  PROFILE_PHOTO_BUCKET,
+  PROFILE_PHOTO_SIGNED_URL_SECONDS,
+  isOwnedPhotoPath,
+} from "@/lib/profile-photo";
 
 interface ProfileRow {
   display_name: string | null;
   self_care_intention: string | null;
   show_cycle_estimate: boolean;
+  photo_path: string | null;
 }
 
-function mapProfile(row: ProfileRow | null): UserProfile {
+async function signPhotoUrl(
+  photoPath: string | null,
+  userId: string,
+): Promise<string | null> {
+  if (!photoPath || !isOwnedPhotoPath(photoPath, userId)) {
+    return null;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from(PROFILE_PHOTO_BUCKET)
+    .createSignedUrl(photoPath, PROFILE_PHOTO_SIGNED_URL_SECONDS);
+
+  if (error || !data?.signedUrl) {
+    return null;
+  }
+
+  return data.signedUrl;
+}
+
+function mapProfile(row: ProfileRow | null, photoUrl: string | null): UserProfile {
   if (!row) return emptyProfile;
   return {
     displayName: row.display_name ?? "",
     selfCareIntention: row.self_care_intention ?? "",
     showCycleEstimate: row.show_cycle_estimate,
+    photoPath: row.photo_path,
+    photoUrl,
   };
 }
 
@@ -29,7 +57,7 @@ export async function loadProfile(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("display_name, self_care_intention, show_cycle_estimate")
+    .select("display_name, self_care_intention, show_cycle_estimate, photo_path")
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -40,7 +68,9 @@ export async function loadProfile(): Promise<{
     };
   }
 
-  return { profile: mapProfile(data as ProfileRow | null), error: null };
+  const row = data as ProfileRow | null;
+  const photoUrl = await signPhotoUrl(row?.photo_path ?? null, userId);
+  return { profile: mapProfile(row, photoUrl), error: null };
 }
 
 export async function getProfile(): Promise<UserProfile> {
@@ -59,6 +89,7 @@ export async function upsertProfile(profile: UserProfile): Promise<boolean> {
       display_name: profile.displayName || null,
       self_care_intention: profile.selfCareIntention || null,
       show_cycle_estimate: profile.showCycleEstimate,
+      photo_path: profile.photoPath,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "user_id" },
@@ -85,4 +116,36 @@ export async function saveProfileFields(
   }
 
   return { ok: true, error: null };
+}
+
+export async function savePhotoPath(
+  photoPath: string | null,
+): Promise<{ ok: boolean; error: string | null }> {
+  return saveProfileFields({ photoPath, photoUrl: null });
+}
+
+export async function removeOwnedPhotoObject(
+  path: string,
+  userId: string,
+): Promise<boolean> {
+  if (!isOwnedPhotoPath(path, userId)) return false;
+  const supabase = await createClient();
+  const { error } = await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove([path]);
+  return !error;
+}
+
+export async function removeOwnProfilePhotos(userId: string): Promise<boolean> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.storage
+    .from(PROFILE_PHOTO_BUCKET)
+    .list(userId, { limit: 50 });
+
+  if (error) return false;
+  const paths = (data ?? [])
+    .map((file) => `${userId}/${file.name}`)
+    .filter((path) => isOwnedPhotoPath(path, userId));
+
+  if (paths.length === 0) return true;
+  const removed = await supabase.storage.from(PROFILE_PHOTO_BUCKET).remove(paths);
+  return !removed.error;
 }
