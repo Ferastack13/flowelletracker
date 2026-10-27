@@ -7,26 +7,35 @@ export const SUPABASE_URL_ENV = "NEXT_PUBLIC_SUPABASE_URL";
 export const SUPABASE_PUBLISHABLE_KEY_ENV =
   "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY";
 
-const REQUIRED_PUBLIC_ENV_VARS = [
-  SUPABASE_URL_ENV,
-  SUPABASE_PUBLISHABLE_KEY_ENV,
-] as const;
-
 export type SupabasePublicEnv = {
   url: string;
   publishableKey: string;
 };
 
-function readTrimmedEnv(name: string): string | undefined {
-  const value = process.env[name];
+function trimEnv(value: string | undefined): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+/**
+ * Read public env with static property access so Next.js can inline
+ * NEXT_PUBLIC_* values into the browser bundle.
+ */
+function readPublicUrl(): string | undefined {
+  return trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+}
+
+function readPublishableKey(): string | undefined {
+  return trimEnv(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+}
+
 /** Returns names of required public env vars that are missing or empty. */
 export function getMissingSupabaseEnvVarNames(): string[] {
-  return REQUIRED_PUBLIC_ENV_VARS.filter((name) => !readTrimmedEnv(name));
+  const missing: string[] = [];
+  if (!readPublicUrl()) missing.push(SUPABASE_URL_ENV);
+  if (!readPublishableKey()) missing.push(SUPABASE_PUBLISHABLE_KEY_ENV);
+  return missing;
 }
 
 /**
@@ -44,7 +53,7 @@ export function getSupabasePublicEnv(): SupabasePublicEnv {
   }
 
   return {
-    url: readTrimmedEnv(SUPABASE_URL_ENV)!,
-    publishableKey: readTrimmedEnv(SUPABASE_PUBLISHABLE_KEY_ENV)!,
+    url: readPublicUrl()!,
+    publishableKey: readPublishableKey()!,
   };
 }

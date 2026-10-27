@@ -28,13 +28,16 @@ export function LoginForm() {
 
       if (error) {
         setStatus("error");
-        setMessage(
-          "Google sign-in could not start. Use the email link, or check that Google is enabled in Supabase.",
-        );
+        setMessage(googleSetupMessage(error.message));
       }
-    } catch {
+    } catch (caught) {
       setStatus("error");
-      setMessage("Something went wrong starting Google sign-in. Try email instead.");
+      const text = caught instanceof Error ? caught.message : "";
+      setMessage(
+        text.includes("Missing required Supabase")
+          ? "The live site cannot reach Supabase yet. Check the Vercel environment variables, then redeploy."
+          : googleSetupMessage(text),
+      );
     }
   }
 
@@ -135,6 +138,19 @@ export function LoginForm() {
       </p>
     </form>
   );
+}
+
+function googleSetupMessage(detail: string): string {
+  const lower = detail.toLowerCase();
+  if (
+    lower.includes("provider") ||
+    lower.includes("unsupported") ||
+    lower.includes("disabled") ||
+    lower.includes("validation")
+  ) {
+    return "Google is not turned on in Supabase yet. Enable the Google provider, or use the email link.";
+  }
+  return "Google sign-in could not start. Enable Google in Supabase Auth, or use the email link.";
 }
 
 function GoogleMark() {
