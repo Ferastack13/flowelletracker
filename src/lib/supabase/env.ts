@@ -23,7 +23,15 @@ function trimEnv(value: string | undefined): string | undefined {
  * NEXT_PUBLIC_* values into the browser bundle.
  */
 function readPublicUrl(): string | undefined {
-  return trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const raw = trimEnv(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  if (!raw) return undefined;
+
+  try {
+    // Project URL only. Paths like /rest/v1 break Auth (no apikey / wrong host path).
+    return new URL(raw).origin;
+  } catch {
+    return undefined;
+  }
 }
 
 function readPublishableKey(): string | undefined {
