@@ -1,13 +1,13 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useId, useState } from "react";
 import Link from "next/link";
 import {
   BellOff,
   Download,
-  HeartHandshake,
   Lock,
   Shield,
+  Trash2,
   UserRound,
   Waves,
 } from "lucide-react";
@@ -15,6 +15,7 @@ import { signOut } from "@/app/auth/actions";
 import {
   deleteSavedRecords,
   exportMyData,
+  saveCycleEstimatePreference,
   saveProfileSettings,
   type ExportActionState,
   type SettingsActionState,
@@ -33,9 +34,11 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   DELETE_RECORDS_CONFIRMATION,
   DISPLAY_NAME_MAX,
+  parseProfileIdentity,
   SELF_CARE_INTENTION_MAX,
   type UserProfile,
 } from "@/lib/profile";
+import { displayInitials } from "@/lib/settings-data";
 import { cn } from "@/lib/utils";
 
 const initialState: SettingsActionState = { status: "idle", message: "" };
@@ -43,9 +46,9 @@ const initialExport: ExportActionState = { status: "idle", message: "" };
 
 const sections = [
   { id: "profile", label: "My Profile", icon: UserRound },
-  { id: "cycle", label: "Cycle", icon: Waves },
+  { id: "cycle", label: "Cycle Preferences", icon: Waves },
   { id: "notifications", label: "Notifications", icon: BellOff },
-  { id: "privacy", label: "Privacy", icon: Shield },
+  { id: "privacy", label: "Privacy & Data", icon: Shield },
   { id: "account", label: "Account", icon: Lock },
 ] as const;
 
@@ -53,15 +56,31 @@ interface SettingsExperienceProps {
   signedIn: boolean;
   email: string | null;
   profile: UserProfile;
+  loadError: string | null;
+}
+
+function statusClass(status: SettingsActionState["status"]) {
+  return status === "error"
+    ? "text-sm text-destructive"
+    : "text-sm text-muted-foreground";
 }
 
 export function SettingsExperience({
   signedIn,
   email,
   profile,
+  loadError,
 }: SettingsExperienceProps) {
+  const switchId = useId();
+  const [displayName, setDisplayName] = useState(profile.displayName);
+  const [intention, setIntention] = useState(profile.selfCareIntention);
+  const [clientError, setClientError] = useState<string | null>(null);
   const [saveState, saveAction, savePending] = useActionState(
     saveProfileSettings,
+    initialState,
+  );
+  const [cycleState, cycleAction, cyclePending] = useActionState(
+    saveCycleEstimatePreference,
     initialState,
   );
   const [exportState, exportAction, exportPending] = useActionState(
@@ -74,7 +93,14 @@ export function SettingsExperience({
   );
 
   useEffect(() => {
-    if (!exportState.payload || !exportState.filename) return;
+    setDisplayName(profile.displayName);
+    setIntention(profile.selfCareIntention);
+  }, [profile.displayName, profile.selfCareIntention]);
+
+  useEffect(() => {
+    if (!exportState.payload || !exportState.filename || !exportState.exportId) {
+      return;
+    }
     const blob = new Blob([exportState.payload], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -82,7 +108,7 @@ export function SettingsExperience({
     link.download = exportState.filename;
     link.click();
     URL.revokeObjectURL(url);
-  }, [exportState.payload, exportState.filename]);
+  }, [exportState.payload, exportState.filename, exportState.exportId]);
 
   if (!signedIn) {
     return (
@@ -104,10 +130,10 @@ export function SettingsExperience({
   }
 
   return (
-    <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[14rem_minmax(0,1fr)] lg:items-start">
+    <div className="mx-auto grid w-full max-w-5xl gap-6 lg:grid-cols-[13.5rem_minmax(0,1fr)] lg:items-start">
       <nav
         aria-label="Settings sections"
-        className="rounded-xl border border-border/70 bg-card/80 p-2 shadow-soft lg:sticky lg:top-8"
+        className="rounded-2xl border border-border/70 bg-card/90 p-2 shadow-soft lg:sticky lg:top-8"
       >
         <ul className="flex gap-1 overflow-x-auto lg:flex-col">
           {sections.map((section) => {
@@ -116,9 +142,9 @@ export function SettingsExperience({
               <li key={section.id} className="shrink-0">
                 <a
                   href={`#${section.id}`}
-                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-plum"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-plum"
                 >
-                  <Icon className="size-4" aria-hidden="true" />
+                  <Icon className="size-4 shrink-0" aria-hidden="true" />
                   {section.label}
                 </a>
               </li>
@@ -127,33 +153,66 @@ export function SettingsExperience({
         </ul>
       </nav>
 
-      <div className="flex min-w-0 flex-col gap-6">
-        <form action={saveAction} className="flex flex-col gap-6">
-          <Card id="profile" className="scroll-mt-24">
-            <CardHeader>
-              <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
-                My Profile
-              </p>
-              <CardTitle className="text-xl md:text-xl">How Flowelle greets you</CardTitle>
-              <CardDescription>
-                A name and a short intention. These are preferences, not cycle
-                records.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
+      <div className="flex min-w-0 flex-col gap-5">
+        {loadError ? (
+          <p className="text-sm text-destructive" role="alert">
+            {loadError}
+          </p>
+        ) : null}
+
+        <Card id="profile" className="scroll-mt-24">
+          <CardHeader className="gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
+              <div
+                className="flex size-14 shrink-0 items-center justify-center rounded-full bg-plum text-sm font-medium tracking-wide text-ivory"
+                aria-hidden="true"
+              >
+                {displayInitials(displayName)}
+              </div>
+              <div className="min-w-0">
+                <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
+                  Hello
+                </p>
+                <CardTitle className="truncate text-xl md:text-xl">
+                  {displayName || "Your space"}
+                </CardTitle>
+                <CardDescription className="mt-1">
+                  {intention || "Add a name and a short intention when you are ready."}
+                </CardDescription>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <form
+              action={saveAction}
+              className="space-y-5"
+              onSubmit={(event) => {
+                const parsed = parseProfileIdentity({
+                  displayName,
+                  selfCareIntention: intention,
+                });
+                if (!parsed.ok) {
+                  event.preventDefault();
+                  setClientError(parsed.message);
+                  return;
+                }
+                setClientError(null);
+              }}
+            >
               <div className="space-y-2">
                 <Label htmlFor="displayName">Display name</Label>
                 <Input
                   id="displayName"
                   name="displayName"
-                  defaultValue={profile.displayName}
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
                   maxLength={DISPLAY_NAME_MAX}
                   placeholder="How should we greet you?"
                   autoComplete="nickname"
                   disabled={savePending}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Optional. Up to {DISPLAY_NAME_MAX} characters.
+                  {displayName.length}/{DISPLAY_NAME_MAX}
                 </p>
               </div>
               <div className="space-y-2">
@@ -161,184 +220,196 @@ export function SettingsExperience({
                 <Textarea
                   id="selfCareIntention"
                   name="selfCareIntention"
-                  defaultValue={profile.selfCareIntention}
+                  value={intention}
+                  onChange={(event) => setIntention(event.target.value)}
                   maxLength={SELF_CARE_INTENTION_MAX}
                   placeholder="A short intention for this season…"
                   disabled={savePending}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Optional. Kept on your profile only. Up to{" "}
-                  {SELF_CARE_INTENTION_MAX} characters.
+                  {intention.length}/{SELF_CARE_INTENTION_MAX}. This stays on
+                  your profile, not in cycle records.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-end">
+                <p
+                  className={statusClass(
+                    clientError ? "error" : saveState.status,
+                  )}
+                  role="status"
+                >
+                  {clientError ?? saveState.message}
+                </p>
+                <Button type="submit" disabled={savePending}>
+                  {savePending ? "Saving…" : "Save changes"}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <div className="grid gap-5 lg:grid-cols-2">
+          <Card id="cycle" className="scroll-mt-24">
+            <CardHeader>
+              <CardTitle className="text-xl md:text-xl">Cycle preferences</CardTitle>
+              <CardDescription>
+                Estimates still come only from recorded period starts. Turning
+                this off hides the window. It does not delete dates or change
+                the calculation.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form action={cycleAction} className="space-y-3">
+                <input
+                  type="hidden"
+                  name="showCycleEstimate"
+                  value={profile.showCycleEstimate ? "" : "on"}
+                />
+                <button
+                  type="submit"
+                  id={switchId}
+                  role="switch"
+                  aria-checked={profile.showCycleEstimate}
+                  disabled={cyclePending}
+                  className="flex w-full items-start justify-between gap-4 rounded-xl border border-border/70 bg-muted/25 px-4 py-3 text-left disabled:opacity-60"
+                >
+                  <span>
+                    <span className="block text-sm font-medium text-plum">
+                      Show next-period window
+                    </span>
+                    <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
+                      {cyclePending
+                        ? "Saving…"
+                        : "Uses your recorded starts after more than one cycle. Not contraception."}
+                    </span>
+                  </span>
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      "mt-1 inline-flex h-6 w-10 shrink-0 rounded-full p-0.5 transition-colors",
+                      profile.showCycleEstimate ? "bg-plum" : "bg-border",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "block size-5 rounded-full bg-card shadow-soft transition-transform",
+                        profile.showCycleEstimate ? "translate-x-4" : "translate-x-0",
+                      )}
+                    />
+                  </span>
+                </button>
+                {cycleState.message ? (
+                  <p className={statusClass(cycleState.status)} role="status">
+                    {cycleState.message}
+                  </p>
+                ) : null}
+              </form>
+            </CardContent>
+          </Card>
+
+          <Card id="notifications" className="scroll-mt-24">
+            <CardHeader>
+              <CardTitle className="text-xl md:text-xl">Notifications</CardTitle>
+              <CardDescription>
+                Get updates and reminders when they exist. Nothing is stored
+                here yet.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-xl border border-border/70 bg-muted/25 px-4 py-3">
+                <p className="text-sm font-medium text-plum">
+                  Reminders are not available yet
+                </p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Flowelle does not send email, push, or SMS. There are no
+                  notification toggles to promise a reminder.
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card id="cycle" className="scroll-mt-24">
+          <Card id="privacy" className="scroll-mt-24">
             <CardHeader>
-              <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
-                Cycle preferences
-              </p>
-              <CardTitle className="text-xl md:text-xl">Next-period window</CardTitle>
+              <CardTitle className="text-xl md:text-xl">Privacy & data</CardTitle>
               <CardDescription>
-                Estimates still come only from recorded period starts. Flowelle
-                does not let you set a 28-day default.
+                Your account can hold period dates, symptom notes, self-care
+                check-ins, and these preferences. Today’s note is general.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <label className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/30 px-4 py-3">
-                <input
-                  type="checkbox"
-                  name="showCycleEstimate"
-                  value="on"
-                  defaultChecked={profile.showCycleEstimate}
-                  disabled={savePending}
-                  className="mt-1 size-4 accent-plum"
-                />
-                <span>
-                  <span className="block text-sm font-medium text-plum">
-                    Show the next-period window
-                  </span>
-                  <span className="mt-1 block text-sm leading-relaxed text-muted-foreground">
-                    When this is on, the dashboard and Cycle Tracker show the
-                    approximate window after more than one recorded start. Turn
-                    it off to keep only the dates you logged.
-                  </span>
-                </span>
-              </label>
-              <p className="flex items-start gap-2 text-sm leading-relaxed text-muted-foreground">
-                <HeartHandshake className="mt-0.5 size-4 shrink-0 text-sage-deep" aria-hidden="true" />
-                Usable cycle lengths stay between 14 and 60 days. That is how
-                the existing calculation decides what to include.
-              </p>
-            </CardContent>
-          </Card>
-
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Button type="submit" disabled={savePending}>
-              {savePending ? "Saving…" : "Save preferences"}
-            </Button>
-            {saveState.message ? (
-              <p
-                className={
-                  saveState.status === "error"
-                    ? "text-sm text-destructive"
-                    : "text-sm text-muted-foreground"
-                }
-                role="status"
-              >
-                {saveState.message}
-              </p>
-            ) : null}
-          </div>
-        </form>
-
-        <Card id="notifications" className="scroll-mt-24">
-          <CardHeader>
-            <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
-              Notifications
-            </p>
-            <CardTitle className="text-xl md:text-xl">Reminders are not available</CardTitle>
-            <CardDescription>
-              Flowelle does not send email, push, or SMS reminders yet. No
-              notification preference is stored, and nothing will arrive.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-
-        <Card id="privacy" className="scroll-mt-24">
-          <CardHeader>
-            <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
-              Privacy & data
-            </p>
-            <CardTitle className="text-xl md:text-xl">What is saved</CardTitle>
-            <CardDescription>
-              Signed-in records stay on your account: period dates, symptom
-              notes, self-care check-ins, and these preferences. Today’s note is
-              general for the date. Flowelle does not diagnose or confirm
-              ovulation.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <form action={exportAction}>
-              <Button type="submit" variant="outline" disabled={exportPending}>
-                <Download className="size-4" aria-hidden="true" />
-                {exportPending ? "Preparing…" : "Download my data"}
-              </Button>
-              {exportState.message ? (
-                <p
-                  className={
-                    exportState.status === "error"
-                      ? "mt-3 text-sm text-destructive"
-                      : "mt-3 text-sm text-muted-foreground"
-                  }
-                  role="status"
-                >
-                  {exportState.message}
-                </p>
-              ) : null}
-            </form>
-
-            <div className="rounded-xl border border-border/70 bg-muted/25 px-4 py-4">
-              <p className="font-serif text-lg text-plum">Delete saved records</p>
-              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                This removes period dates, symptom notes, self-care check-ins,
-                and profile preferences for this account. It does not close the
-                sign-in itself.
-              </p>
-              <form action={deleteAction} className="mt-4 space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="confirmation">
-                    Type {DELETE_RECORDS_CONFIRMATION} to confirm
-                  </Label>
-                  <Input
-                    id="confirmation"
-                    name="confirmation"
-                    autoComplete="off"
-                    disabled={deletePending}
-                  />
-                </div>
-                <Button type="submit" variant="outline" disabled={deletePending}>
-                  {deletePending ? "Removing…" : "Delete saved records"}
+            <CardContent className="space-y-5">
+              <form action={exportAction}>
+                <Button type="submit" variant="outline" disabled={exportPending}>
+                  <Download className="size-4" aria-hidden="true" />
+                  {exportPending ? "Preparing…" : "Download my data"}
                 </Button>
-                {deleteState.message ? (
-                  <p
-                    className={
-                      deleteState.status === "error"
-                        ? "text-sm text-destructive"
-                        : "text-sm text-muted-foreground"
-                    }
-                    role="status"
-                  >
-                    {deleteState.message}
+                {exportState.message ? (
+                  <p className={`mt-3 ${statusClass(exportState.status)}`} role="status">
+                    {exportState.message}
                   </p>
                 ) : null}
               </form>
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card id="account" className="scroll-mt-24">
-          <CardHeader>
-            <p className="text-[11px] font-medium tracking-[0.14em] text-rose-muted uppercase">
-              Account
-            </p>
-            <CardTitle className="text-xl md:text-xl">Signed in</CardTitle>
-            <CardDescription>
-              This is the email on the current session.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="truncate text-sm text-plum" title={email ?? undefined}>
-              {email}
-            </p>
-            <form action={signOut}>
-              <Button type="submit" variant="outline">
-                Sign out
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
+              <div className="rounded-xl border border-border/70 bg-muted/25 px-4 py-4">
+                <p className="font-serif text-lg text-plum">Delete saved records</p>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  Removes period dates, symptom notes, self-care check-ins, and
+                  profile preferences. It does not close the sign-in.
+                </p>
+                <form action={deleteAction} className="mt-4 space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmation">
+                      Type {DELETE_RECORDS_CONFIRMATION} to confirm
+                    </Label>
+                    <Input
+                      id="confirmation"
+                      name="confirmation"
+                      autoComplete="off"
+                      disabled={deletePending}
+                    />
+                  </div>
+                  <Button type="submit" variant="outline" disabled={deletePending}>
+                    <Trash2 className="size-4" aria-hidden="true" />
+                    {deletePending ? "Removing…" : "Delete saved records"}
+                  </Button>
+                  {deleteState.message ? (
+                    <p className={statusClass(deleteState.status)} role="status">
+                      {deleteState.message}
+                    </p>
+                  ) : null}
+                </form>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card id="account" className="scroll-mt-24">
+            <CardHeader>
+              <CardTitle className="text-xl md:text-xl">Account</CardTitle>
+              <CardDescription>
+                This is the email on the current session.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="flex items-center gap-2 text-sm text-plum">
+                <span
+                  className="size-2 rounded-full bg-sage-deep"
+                  aria-hidden="true"
+                />
+                <span className="truncate" title={email ?? undefined}>
+                  {email}
+                </span>
+              </p>
+              <form action={signOut}>
+                <Button type="submit" variant="outline">
+                  Sign out
+                </Button>
+              </form>
+              <p className="text-xs leading-relaxed text-muted-foreground">
+                There is no password in Flowelle. Use Google or a new email
+                link if you need to sign in again.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );

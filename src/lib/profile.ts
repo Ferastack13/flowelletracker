@@ -28,11 +28,12 @@ export function normalizeOptionalText(
   return { ok: true, value: trimmed };
 }
 
-export function parseProfileForm(input: {
+export function parseProfileIdentity(input: {
   displayName: string;
   selfCareIntention: string;
-  showCycleEstimate: boolean;
-}): { ok: true; profile: UserProfile } | { ok: false; message: string } {
+}):
+  | { ok: true; displayName: string; selfCareIntention: string }
+  | { ok: false; message: string } {
   const displayName = normalizeOptionalText(input.displayName, DISPLAY_NAME_MAX);
   if (!displayName.ok) {
     return { ok: false, message: `Display name: ${displayName.message}` };
@@ -48,9 +49,35 @@ export function parseProfileForm(input: {
 
   return {
     ok: true,
+    displayName: displayName.value,
+    selfCareIntention: intention.value,
+  };
+}
+
+export function mergeProfileFields(
+  current: UserProfile,
+  fields: Partial<UserProfile>,
+): UserProfile {
+  return {
+    displayName: fields.displayName ?? current.displayName,
+    selfCareIntention: fields.selfCareIntention ?? current.selfCareIntention,
+    showCycleEstimate: fields.showCycleEstimate ?? current.showCycleEstimate,
+  };
+}
+
+export function parseProfileForm(input: {
+  displayName: string;
+  selfCareIntention: string;
+  showCycleEstimate: boolean;
+}): { ok: true; profile: UserProfile } | { ok: false; message: string } {
+  const identity = parseProfileIdentity(input);
+  if (!identity.ok) return identity;
+
+  return {
+    ok: true,
     profile: {
-      displayName: displayName.value,
-      selfCareIntention: intention.value,
+      displayName: identity.displayName,
+      selfCareIntention: identity.selfCareIntention,
       showCycleEstimate: input.showCycleEstimate,
     },
   };

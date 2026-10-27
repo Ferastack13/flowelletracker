@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/cycle.test.ts src/lib/profile.test.ts"
+    "test": "node --experimental-strip-types --test src/lib/cycle.test.ts src/lib/profile.test.ts src/lib/settings-data.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

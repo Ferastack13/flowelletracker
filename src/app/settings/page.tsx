@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { SettingsExperience } from "@/app/settings/settings-experience";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { getSignedInEmail } from "@/lib/supabase/auth";
-import { getProfile } from "@/lib/supabase/profiles";
+import { loadProfile } from "@/lib/supabase/profiles";
 import { emptyProfile } from "@/lib/profile";
 
 export const metadata: Metadata = {
@@ -15,7 +15,7 @@ export default function SettingsPage() {
   return (
     <AppShellWithAuth
       title="Settings"
-      description="A quieter place to keep your name, your intention, and how Flowelle uses your recorded cycle."
+      description="Make Flowelle feel more like you. Update your profile, how the next-period window is shown, and how you use your data."
     >
       <Suspense fallback={<SettingsFallback />}>
         <SettingsSession />
@@ -26,13 +26,14 @@ export default function SettingsPage() {
 
 async function SettingsSession() {
   const email = await getSignedInEmail();
-  const profile = email ? await getProfile() : emptyProfile;
+  const loaded = email ? await loadProfile() : { profile: emptyProfile, error: null };
 
   return (
     <SettingsExperience
       signedIn={Boolean(email)}
       email={email}
-      profile={profile}
+      profile={loaded.profile}
+      loadError={loaded.error}
     />
   );
 }

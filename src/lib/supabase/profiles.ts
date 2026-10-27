@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/auth";
-import { emptyProfile, type UserProfile } from "@/lib/profile";
+import { emptyProfile, mergeProfileFields, type UserProfile } from "@/lib/profile";
 
 interface ProfileRow {
   display_name: string | null;
@@ -17,9 +17,14 @@ function mapProfile(row: ProfileRow | null): UserProfile {
   };
 }
 
-export async function getProfile(): Promise<UserProfile> {
+export async function loadProfile(): Promise<{
+  profile: UserProfile;
+  error: string | null;
+}> {
   const userId = await getSignedInUserId();
-  if (!userId) return emptyProfile;
+  if (!userId) {
+    return { profile: emptyProfile, error: null };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -28,8 +33,19 @@ export async function getProfile(): Promise<UserProfile> {
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (error || !data) return emptyProfile;
-  return mapProfile(data as ProfileRow);
+  if (error) {
+    return {
+      profile: emptyProfile,
+      error: "Your preferences could not be loaded. Refresh and try again.",
+    };
+  }
+
+  return { profile: mapProfile(data as ProfileRow | null), error: null };
+}
+
+export async function getProfile(): Promise<UserProfile> {
+  const { profile } = await loadProfile();
+  return profile;
 }
 
 export async function upsertProfile(profile: UserProfile): Promise<boolean> {
@@ -49,4 +65,24 @@ export async function upsertProfile(profile: UserProfile): Promise<boolean> {
   );
 
   return !error;
+}
+
+export async function saveProfileFields(
+  fields: Partial<UserProfile>,
+): Promise<{ ok: boolean; error: string | null }> {
+  const loaded = await loadProfile();
+  if (loaded.error) {
+    return { ok: false, error: loaded.error };
+  }
+
+  const saved = await upsertProfile(mergeProfileFields(loaded.profile, fields));
+
+  if (!saved) {
+    return {
+      ok: false,
+      error: "Those preferences could not be saved. Try again.",
+    };
+  }
+
+  return { ok: true, error: null };
 }
