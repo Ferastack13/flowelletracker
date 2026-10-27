@@ -27,12 +27,14 @@ interface CycleTrackerProps {
   signedIn: boolean;
   periods: CyclePeriod[];
   overview: CycleOverview;
+  showCycleEstimate?: boolean;
 }
 
 export function CycleTracker({
   signedIn,
   periods,
   overview,
+  showCycleEstimate = true,
 }: CycleTrackerProps) {
   const [startState, startAction, startPending] = useActionState(
     logPeriodStart,
@@ -193,7 +195,14 @@ export function CycleTracker({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <CycleEstimateSummary estimate={overview.estimate} />
+          {showCycleEstimate ? (
+            <CycleEstimateSummary estimate={overview.estimate} />
+          ) : (
+            <p className="text-sm leading-relaxed text-muted-foreground">
+              The next-period window is hidden in Settings. Lengths between
+              recorded starts still appear above.
+            </p>
+          )}
         </CardContent>
       </Card>
     </div>

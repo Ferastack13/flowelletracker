@@ -10,6 +10,8 @@ import { buildCycleOverview } from "@/lib/cycle";
 import { getSignedInEmail } from "@/lib/supabase/auth";
 import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
 import { listSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
+import { getProfile } from "@/lib/supabase/profiles";
+import { emptyProfile } from "@/lib/profile";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -30,14 +32,26 @@ async function DashboardSession() {
   const email = await getSignedInEmail();
   const periods = email ? await listCyclePeriods() : [];
   const checkins = email ? await listSelfCareCheckins() : [];
+  const profile = email ? await getProfile() : emptyProfile;
   const cycle = buildCycleOverview(periods);
 
   return (
     <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-5 sm:gap-6">
-      <WelcomeBanner signedIn={Boolean(email)} />
+      <WelcomeBanner
+        signedIn={Boolean(email)}
+        displayName={profile.displayName}
+        subtitle={
+          profile.selfCareIntention ||
+          "A calm overview of your cycle, care, and daily note."
+        }
+      />
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-stretch lg:gap-6">
-        <CycleOverviewCard cycle={cycle} signedIn={Boolean(email)} />
+        <CycleOverviewCard
+          cycle={cycle}
+          signedIn={Boolean(email)}
+          showCycleEstimate={profile.showCycleEstimate}
+        />
         <DailyNoteCard />
       </div>
 

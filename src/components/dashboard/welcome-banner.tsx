@@ -2,11 +2,13 @@ interface WelcomeBannerProps {
   /** Optional short supporting line under the heading. */
   subtitle?: string;
   signedIn?: boolean;
+  displayName?: string;
 }
 
 export function WelcomeBanner({
   subtitle = "A calm overview of your cycle, care, and daily note.",
   signedIn = false,
+  displayName,
 }: WelcomeBannerProps) {
   return (
     <section
@@ -22,7 +24,7 @@ export function WelcomeBanner({
             id="welcome-heading"
             className="font-serif text-2xl tracking-tight text-plum sm:text-[1.75rem]"
           >
-            Welcome to your space
+            {displayName ? `Welcome, ${displayName}` : "Welcome to your space"}
           </h1>
           <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">
             {subtitle}

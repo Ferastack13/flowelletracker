@@ -17,11 +17,13 @@ import { cn } from "@/lib/utils";
 interface CycleOverviewCardProps {
   cycle: CycleOverview;
   signedIn?: boolean;
+  showCycleEstimate?: boolean;
 }
 
 export function CycleOverviewCard({
   cycle,
   signedIn = false,
+  showCycleEstimate = true,
 }: CycleOverviewCardProps) {
   if (!cycle.hasCycleData) {
     return (
@@ -154,7 +156,14 @@ export function CycleOverviewCard({
           </p>
         )}
 
-        <CycleEstimateSummary estimate={cycle.estimate} />
+        {showCycleEstimate ? (
+          <CycleEstimateSummary estimate={cycle.estimate} />
+        ) : (
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            The next-period window is hidden in Settings. Your logged dates are
+            unchanged.
+          </p>
+        )}
       </CardContent>
       <CardFooter className="mt-auto flex-wrap">
         <Link
