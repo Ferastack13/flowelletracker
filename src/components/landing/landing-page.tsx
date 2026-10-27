@@ -72,22 +72,19 @@ export function LandingPage() {
             Privacy
           </Link>
           <Link
+            href="/dashboard"
+            className="hidden text-sm text-muted-foreground transition-colors hover:text-plum md:inline"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="/login"
-            className="hidden text-sm text-muted-foreground transition-colors hover:text-plum sm:inline"
+            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
           >
             Sign in
           </Link>
-          <Link
-            href="/dashboard"
-            className={cn(buttonVariants({ variant: "outline", size: "sm" }))}
-          >
-            View dashboard
-          </Link>
-          <Link
-            href="/dashboard"
-            className={cn(buttonVariants({ size: "sm" }))}
-          >
-            Enter Flowelle
+          <Link href="/login" className={cn(buttonVariants({ size: "sm" }))}>
+            Sign up
           </Link>
         </nav>
       </header>
@@ -118,10 +115,10 @@ export function LandingPage() {
               </p>
               <div className="mt-8 flex flex-wrap items-center gap-3">
                 <Link
-                  href="/dashboard"
+                  href="/login"
                   className={cn(buttonVariants({ size: "lg" }))}
                 >
-                  Open dashboard
+                  Sign in or sign up
                 </Link>
                 <Link
                   href="#features"
@@ -281,12 +278,17 @@ export function LandingPage() {
             Sign in to save period dates, symptoms, and self-care. Today’s note
             is already here. Personalised notes are not live yet.
           </p>
-          <Link
-            href="/dashboard"
-            className={cn(buttonVariants({ size: "lg" }), "mt-8 inline-flex")}
-          >
-            Enter Flowelle
-          </Link>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <Link href="/login" className={cn(buttonVariants({ size: "lg" }))}>
+              Sign in or sign up
+            </Link>
+            <Link
+              href="/dashboard"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+            >
+              View dashboard
+            </Link>
+          </div>
         </section>
       </main>
 

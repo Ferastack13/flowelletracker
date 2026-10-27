@@ -1,0 +1,14 @@
+---
+description: Always commit and push Flowelle changes to GitHub
+alwaysApply: true
+---
+
+# Commit and push
+
+After finishing work that adds or changes project files, commit and push to `origin` on the current branch without waiting to be asked.
+
+- Use a short commit message that says why the change exists
+- Never commit `.env`, `.env.local`, keys, or credentials
+- Never skip git hooks
+- Never force-push unless the user explicitly asks
+- After the commit, `git push -u origin HEAD` if the branch has no upstream, otherwise `git push`

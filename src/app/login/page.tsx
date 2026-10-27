@@ -8,8 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = {
-  title: "Sign in",
-  description: "Sign in to Flowelle with an email link.",
+  title: "Sign in or sign up",
+  description: "Sign in or create a Flowelle account with Google or an email link.",
 };
 
 export default function LoginPage({
@@ -35,11 +35,12 @@ export default function LoginPage({
               Account
             </p>
             <CardTitle className="text-2xl md:text-2xl">
-              Sign in to your space
+              Sign in or create an account
             </CardTitle>
             <p className="text-sm leading-relaxed text-muted-foreground">
-              We send a one-time link to your email. No password. Period dates,
-              symptoms, and self-care check-ins save after you sign in.
+              Use Google or an email link. No password. The first visit creates
+              your account. Period dates, symptoms, and self-care then save
+              there.
             </p>
           </CardHeader>
           <CardContent className="space-y-4">

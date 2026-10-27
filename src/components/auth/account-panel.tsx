@@ -37,7 +37,7 @@ export async function AccountPanel() {
             "mt-3 w-full",
           )}
         >
-          Sign in
+          Sign in or sign up
         </Link>
       </div>
     );
