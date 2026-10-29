@@ -217,7 +217,7 @@ export async function exportMyData(
   }
 
   const supabase = await createClient();
-  const [profile, periods, symptoms, checkins] = await Promise.all([
+  const [profile, periods, symptoms, checkins, bookmarks] = await Promise.all([
     getProfile(),
     supabase
       .from("cycle_periods")
@@ -234,9 +234,13 @@ export async function exportMyData(
       .select("id, checked_on, hydration, movement, sleep, personal_care")
       .eq("user_id", userId)
       .order("checked_on", { ascending: false }),
+    supabase
+      .from("learn_bookmarks")
+      .select("article_slug")
+      .eq("user_id", userId),
   ]);
 
-  if (periods.error || symptoms.error || checkins.error) {
+  if (periods.error || symptoms.error || checkins.error || bookmarks.error) {
     return {
       status: "error",
       message: "Your export could not be prepared. Try again.",
@@ -249,6 +253,9 @@ export async function exportMyData(
     cyclePeriods: periods.data ?? [],
     symptomLogs: symptoms.data ?? [],
     selfCareCheckins: checkins.data ?? [],
+    savedGuides: (bookmarks.data ?? []).map((row) =>
+      String(row.article_slug ?? ""),
+    ),
   });
 
   return {

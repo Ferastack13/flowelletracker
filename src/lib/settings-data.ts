@@ -2,6 +2,7 @@ export const RECORD_TABLES = [
   "cycle_periods",
   "symptom_logs",
   "self_care_checkins",
+  "learn_bookmarks",
   "profiles",
 ] as const;
 
@@ -41,6 +42,7 @@ export interface PersonalExport {
   cyclePeriods: ExportPeriod[];
   symptomLogs: ExportSymptom[];
   selfCareCheckins: ExportCheckin[];
+  savedGuides: string[];
 }
 
 export function isDeletionConfirmed(value: string): boolean {
@@ -79,6 +81,7 @@ export function buildPersonalExport(input: {
   cyclePeriods: Array<Record<string, unknown>>;
   symptomLogs: Array<Record<string, unknown>>;
   selfCareCheckins: Array<Record<string, unknown>>;
+  savedGuides?: string[];
 }): { document: PersonalExport; isEmpty: boolean } {
   const cyclePeriods = input.cyclePeriods.map((row) => {
     const safe = omitInternalKeys(row);
@@ -128,6 +131,9 @@ export function buildPersonalExport(input: {
     cyclePeriods,
     symptomLogs,
     selfCareCheckins,
+    savedGuides: (input.savedGuides ?? []).filter(
+      (slug) => typeof slug === "string" && slug.length > 0,
+    ),
   };
 
   const isEmpty =
@@ -135,7 +141,8 @@ export function buildPersonalExport(input: {
     !document.profile.selfCareIntention &&
     document.cyclePeriods.length === 0 &&
     document.symptomLogs.length === 0 &&
-    document.selfCareCheckins.length === 0;
+    document.selfCareCheckins.length === 0 &&
+    document.savedGuides.length === 0;
 
   return { document, isEmpty };
 }

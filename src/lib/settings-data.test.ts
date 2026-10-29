@@ -90,6 +90,7 @@ describe("deletion confirmation and leftovers", () => {
       cycle_periods: 0,
       symptom_logs: 2,
       self_care_checkins: 0,
+      learn_bookmarks: 0,
       profiles: 0,
     });
     assert.equal(leftover.complete, false);
@@ -101,6 +102,7 @@ describe("deletion confirmation and leftovers", () => {
       cycle_periods: 0,
       symptom_logs: 0,
       self_care_checkins: 0,
+      learn_bookmarks: 0,
     });
     assert.equal(leftover.complete, false);
     assert.deepEqual(leftover.remaining, ["profiles"]);
@@ -111,6 +113,7 @@ describe("deletion confirmation and leftovers", () => {
       cycle_periods: 0,
       symptom_logs: 0,
       self_care_checkins: 0,
+      learn_bookmarks: 0,
       profiles: 0,
     });
     assert.equal(done.complete, true);

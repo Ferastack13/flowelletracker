@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --experimental-strip-types --test src/lib/access.test.ts src/lib/cycle.test.ts src/lib/cycle-records.test.ts src/lib/profile.test.ts src/lib/profile-photo.test.ts src/lib/self-care.test.ts src/lib/settings-data.test.ts src/lib/symptoms.test.ts"
+    "test": "node --experimental-strip-types --test src/lib/access.test.ts src/lib/cycle.test.ts src/lib/cycle-records.test.ts src/lib/learn/catalog.test.ts src/lib/profile.test.ts src/lib/profile-photo.test.ts src/lib/self-care.test.ts src/lib/settings-data.test.ts src/lib/symptoms.test.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",
