@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 import {
+  buildSelfCareOverview,
   checkinForDate,
   emptySelfCareCheckin,
   hasAnySelfCarePillar,
@@ -46,5 +47,62 @@ describe("self-care check-in updates", () => {
       "hydration",
     );
     assert.equal(hasAnySelfCarePillar(next), false);
+  });
+});
+
+describe("self-care dashboard counts", () => {
+  it("marks a pillar done only for the selected local date", () => {
+    const checkins = [
+      {
+        id: "c1",
+        checkedOn: "2026-10-29",
+        hydration: true,
+        movement: false,
+        sleep: false,
+        personalCare: false,
+      },
+      {
+        id: "c2",
+        checkedOn: "2026-10-28",
+        hydration: false,
+        movement: true,
+        sleep: true,
+        personalCare: false,
+      },
+    ];
+
+    const today = buildSelfCareOverview(checkins, "2026-10-29");
+    const hydration = today.find((pillar) => pillar.id === "hydration");
+    const movement = today.find((pillar) => pillar.id === "movement");
+
+    assert.equal(hydration?.doneToday, true);
+    assert.equal(movement?.doneToday, false);
+    assert.equal(hydration?.doneDays, 1);
+    assert.equal(movement?.doneDays, 1);
+  });
+
+  it("does not count another day's check-in as today", () => {
+    const overview = buildSelfCareOverview(
+      [
+        {
+          id: "c1",
+          checkedOn: "2026-10-01",
+          hydration: true,
+          movement: true,
+          sleep: true,
+          personalCare: true,
+        },
+      ],
+      "2026-10-29",
+    );
+
+    assert.equal(
+      overview.every((pillar) => pillar.doneToday === false),
+      true,
+    );
+    assert.equal(
+      overview.every((pillar) => pillar.doneDays === 0),
+      true,
+    );
   });
 });

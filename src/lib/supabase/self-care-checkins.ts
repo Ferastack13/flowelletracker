@@ -22,11 +22,13 @@ function mapCheckin(row: SelfCareCheckinRow): SelfCareCheckin {
   };
 }
 
-export async function listSelfCareCheckins(
+export async function loadSelfCareCheckins(
   days = 28,
-): Promise<SelfCareCheckin[]> {
+): Promise<{ checkins: SelfCareCheckin[]; error: string | null }> {
   const userId = await getSignedInUserId();
-  if (!userId) return [];
+  if (!userId) {
+    return { checkins: [], error: null };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -36,8 +38,24 @@ export async function listSelfCareCheckins(
     .order("checked_on", { ascending: false })
     .limit(days);
 
-  if (error || !data) return [];
-  return data.map((row) => mapCheckin(row as SelfCareCheckinRow));
+  if (error) {
+    return {
+      checkins: [],
+      error: "Self-care check-ins could not be loaded. Refresh and try again.",
+    };
+  }
+
+  return {
+    checkins: (data ?? []).map((row) => mapCheckin(row as SelfCareCheckinRow)),
+    error: null,
+  };
+}
+
+export async function listSelfCareCheckins(
+  days = 28,
+): Promise<SelfCareCheckin[]> {
+  const { checkins } = await loadSelfCareCheckins(days);
+  return checkins;
 }
 
 export async function getSelfCareCheckinForDate(

@@ -28,9 +28,14 @@ function mapSymptomLog(row: SymptomLogRow): SymptomLog | null {
   };
 }
 
-export async function listSymptomLogs(): Promise<SymptomLog[]> {
+export async function loadSymptomLogs(): Promise<{
+  entries: SymptomLog[];
+  error: string | null;
+}> {
   const userId = await getSignedInUserId();
-  if (!userId) return [];
+  if (!userId) {
+    return { entries: [], error: null };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -41,8 +46,22 @@ export async function listSymptomLogs(): Promise<SymptomLog[]> {
     .order("created_at", { ascending: false })
     .limit(40);
 
-  if (error || !data) return [];
-  return data
-    .map((row) => mapSymptomLog(row as SymptomLogRow))
-    .filter((row): row is SymptomLog => row !== null);
+  if (error) {
+    return {
+      entries: [],
+      error: "Symptom entries could not be loaded. Refresh and try again.",
+    };
+  }
+
+  return {
+    entries: (data ?? [])
+      .map((row) => mapSymptomLog(row as SymptomLogRow))
+      .filter((row): row is SymptomLog => row !== null),
+    error: null,
+  };
+}
+
+export async function listSymptomLogs(): Promise<SymptomLog[]> {
+  const { entries } = await loadSymptomLogs();
+  return entries;
 }

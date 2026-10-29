@@ -46,7 +46,18 @@ export function SelfCareProgress({ signedIn, checkins }: SelfCareProgressProps) 
     setToday(formatLocalDate(new Date()));
   }, []);
 
-  const pillars = buildSelfCareOverview(checkins, today || "1970-01-01");
+  if (!today) {
+    return (
+      <Card className="min-h-0">
+        <CardHeader>
+          <CardTitle className="text-xl md:text-xl">Self-care overview</CardTitle>
+          <CardDescription>Checking today’s date…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const pillars = buildSelfCareOverview(checkins, today);
   const doneToday = pillars.filter((pillar) => pillar.doneToday).length;
 
   return (

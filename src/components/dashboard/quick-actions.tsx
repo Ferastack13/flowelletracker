@@ -37,7 +37,7 @@ const actions: QuickAction[] = [
   {
     id: "symptoms",
     label: "Record symptoms",
-    description: "Open the cycle tracker",
+    description: "Open symptom logging",
     icon: CalendarDays,
     href: "/cycle#symptoms",
     available: true,

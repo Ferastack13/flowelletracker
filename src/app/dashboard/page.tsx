@@ -3,13 +3,14 @@ import { Suspense } from "react";
 import { CycleOverviewCard } from "@/components/dashboard/cycle-overview-card";
 import { DailyNoteCard } from "@/components/dashboard/daily-note-card";
 import { QuickActions } from "@/components/dashboard/quick-actions";
+import { RecentSymptoms } from "@/components/dashboard/recent-symptoms";
 import { SelfCareProgress } from "@/components/dashboard/self-care-progress";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
-import { buildCycleOverview } from "@/lib/cycle";
 import { getSignedInEmail } from "@/lib/supabase/auth";
-import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
-import { listSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
+import { loadCyclePeriods } from "@/lib/supabase/cycle-periods";
+import { loadSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
+import { loadSymptomLogs } from "@/lib/supabase/symptom-logs";
 import { getProfile } from "@/lib/supabase/profiles";
 import { emptyProfile } from "@/lib/profile";
 
@@ -30,15 +31,23 @@ export default function DashboardPage() {
 
 async function DashboardSession() {
   const email = await getSignedInEmail();
-  const periods = email ? await listCyclePeriods() : [];
-  const checkins = email ? await listSelfCareCheckins() : [];
-  const profile = email ? await getProfile() : emptyProfile;
-  const cycle = buildCycleOverview(periods);
+  const signedIn = Boolean(email);
+  const periods = signedIn
+    ? await loadCyclePeriods()
+    : { periods: [], error: null };
+  const checkins = signedIn
+    ? await loadSelfCareCheckins()
+    : { checkins: [], error: null };
+  const symptoms = signedIn
+    ? await loadSymptomLogs()
+    : { entries: [], error: null };
+  const profile = signedIn ? await getProfile() : emptyProfile;
+  const loadError = periods.error ?? checkins.error ?? symptoms.error;
 
   return (
     <div className="mx-auto flex w-full max-w-6xl min-w-0 flex-col gap-5 sm:gap-6">
       <WelcomeBanner
-        signedIn={Boolean(email)}
+        signedIn={signedIn}
         displayName={profile.displayName}
         subtitle={
           profile.selfCareIntention ||
@@ -46,18 +55,24 @@ async function DashboardSession() {
         }
       />
 
+      {loadError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {loadError}
+        </p>
+      ) : null}
+
       <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-stretch lg:gap-6">
         <CycleOverviewCard
-          cycle={cycle}
-          signedIn={Boolean(email)}
+          periods={periods.periods}
+          signedIn={signedIn}
           showCycleEstimate={profile.showCycleEstimate}
         />
         <DailyNoteCard />
       </div>
 
       <QuickActions />
-
-      <SelfCareProgress signedIn={Boolean(email)} checkins={checkins} />
+      <RecentSymptoms signedIn={signedIn} entries={symptoms.entries} />
+      <SelfCareProgress signedIn={signedIn} checkins={checkins.checkins} />
     </div>
   );
 }

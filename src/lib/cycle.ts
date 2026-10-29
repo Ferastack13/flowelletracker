@@ -50,6 +50,22 @@ export interface NextPeriodEstimate {
   completedCyclesUsed: number;
 }
 
+export type PeriodPresence =
+  | "none"
+  | "future-only"
+  | "started-today"
+  | "recorded-bleeding"
+  | "cycle-day"
+  | "end-unknown";
+
+export interface PeriodStatus {
+  presence: PeriodPresence;
+  headline: string;
+  detail: string;
+  cycleDay: number | null;
+  futureStartCount: number;
+}
+
 export interface CycleOverview {
   hasCycleData: boolean;
   currentDay: number | null;
@@ -57,6 +73,7 @@ export interface CycleOverview {
   lastPeriodStart: string | null;
   lastPeriodEnd: string | null;
   phaseLabel?: string | null;
+  periodStatus: PeriodStatus;
   intervals: CycleInterval[];
   history: CycleHistoryItem[];
   estimate: NextPeriodEstimate;
@@ -203,6 +220,88 @@ function buildEstimate(
   };
 }
 
+function emptyPeriodStatus(
+  presence: PeriodPresence,
+  detail: string,
+  futureStartCount = 0,
+): PeriodStatus {
+  const headlines: Record<PeriodPresence, string> = {
+    none: "No period recorded",
+    "future-only": "No current period",
+    "started-today": "Period started",
+    "recorded-bleeding": "Period in progress",
+    "cycle-day": "Cycle day",
+    "end-unknown": "Cycle day",
+  };
+
+  return {
+    presence,
+    headline: headlines[presence],
+    detail,
+    cycleDay: null,
+    futureStartCount,
+  };
+}
+
+function describePeriodStatus(input: {
+  lastRecorded: CyclePeriod | undefined;
+  currentDay: number | null;
+  today: string;
+  futureStartCount: number;
+}): PeriodStatus {
+  const { lastRecorded, currentDay, today, futureStartCount } = input;
+
+  if (!lastRecorded || currentDay == null) {
+    return emptyPeriodStatus(
+      futureStartCount > 0 ? "future-only" : "none",
+      futureStartCount > 0
+        ? "Saved starts are after today, so they are not counted as a current period. Open the tracker to correct a date entered by mistake."
+        : "Log a period start on or before today to see cycle day.",
+      futureStartCount,
+    );
+  }
+
+  if (lastRecorded.startedOn === today) {
+    return {
+      presence: "started-today",
+      headline: "Period started",
+      detail:
+        "Day 1, from the start you recorded today. Flowelle will not keep calling this an ongoing period if an end date is never added.",
+      cycleDay: 1,
+      futureStartCount,
+    };
+  }
+
+  const endedOn = lastRecorded.endedOn;
+  if (endedOn && endedOn >= lastRecorded.startedOn && today <= endedOn) {
+    return {
+      presence: "recorded-bleeding",
+      headline: "Period in progress",
+      detail: `Today falls between your recorded start on ${lastRecorded.startedOn} and end on ${endedOn}.`,
+      cycleDay: currentDay,
+      futureStartCount,
+    };
+  }
+
+  if (endedOn && endedOn >= lastRecorded.startedOn && today > endedOn) {
+    return {
+      presence: "cycle-day",
+      headline: `Cycle day ${currentDay}`,
+      detail: `Counted from your last start on ${lastRecorded.startedOn}. That period is recorded as ended on ${endedOn}.`,
+      cycleDay: currentDay,
+      futureStartCount,
+    };
+  }
+
+  return {
+    presence: "end-unknown",
+    headline: `Cycle day ${currentDay}`,
+    detail: `Counted from your last start on ${lastRecorded.startedOn}. An end date is not recorded, so Flowelle is not treating this as an ongoing period.`,
+    cycleDay: currentDay,
+    futureStartCount,
+  };
+}
+
 function emptyOverview(estimateReason: string): CycleOverview {
   return {
     hasCycleData: false,
@@ -211,6 +310,10 @@ function emptyOverview(estimateReason: string): CycleOverview {
     lastPeriodStart: null,
     lastPeriodEnd: null,
     phaseLabel: null,
+    periodStatus: emptyPeriodStatus(
+      "none",
+      "Log a period start on or before today to see cycle day.",
+    ),
     intervals: [],
     history: [],
     estimate: emptyEstimate(estimateReason),
@@ -218,7 +321,11 @@ function emptyOverview(estimateReason: string): CycleOverview {
 }
 
 export function referenceDateToday(): string {
-  return formatUtcDate(new Date());
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 export function intervalStatusLabel(status: CycleIntervalStatus): string {
@@ -312,6 +419,9 @@ export function buildCycleOverview(
   const currentDay = lastRecorded
     ? Math.max(1, daysBetween(lastRecorded.startedOn, today) + 1)
     : null;
+  const futureStartCount = chronological.filter(
+    (period) => period.startedOn > today,
+  ).length;
 
   return {
     hasCycleData: true,
@@ -320,6 +430,12 @@ export function buildCycleOverview(
     lastPeriodStart: lastRecorded?.startedOn ?? null,
     lastPeriodEnd: lastRecorded?.endedOn ?? null,
     phaseLabel: null,
+    periodStatus: describePeriodStatus({
+      lastRecorded,
+      currentDay,
+      today,
+      futureStartCount,
+    }),
     intervals,
     history,
     estimate,

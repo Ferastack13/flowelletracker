@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, Droplets } from "lucide-react";
 import { CycleEstimateSummary } from "@/components/cycle/cycle-estimate-summary";
@@ -11,23 +14,54 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { CycleOverview } from "@/lib/cycle";
+import {
+  buildCycleOverview,
+  type CyclePeriod,
+} from "@/lib/cycle";
+import { formatLocalDate } from "@/lib/self-care";
 import { cn } from "@/lib/utils";
 
 interface CycleOverviewCardProps {
-  cycle: CycleOverview;
+  periods: CyclePeriod[];
   signedIn?: boolean;
   showCycleEstimate?: boolean;
 }
 
 export function CycleOverviewCard({
-  cycle,
+  periods,
   signedIn = false,
   showCycleEstimate = true,
 }: CycleOverviewCardProps) {
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(formatLocalDate(new Date()));
+  }, []);
+
+  if (!today) {
+    return (
+      <Card className="flex h-full min-h-0 flex-col">
+        <CardHeader>
+          <CardTitle className="text-xl md:text-xl">Cycle overview</CardTitle>
+          <CardDescription>Checking today’s date…</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
+  const cycle = buildCycleOverview(periods, today);
+  const status = cycle.periodStatus;
+  const day = status.cycleDay ?? cycle.currentDay;
+  const progress =
+    day && cycle.cycleLength
+      ? Math.min(100, Math.round((day / cycle.cycleLength) * 100))
+      : null;
+  const pastTypical =
+    Boolean(day && cycle.cycleLength && day > cycle.cycleLength);
+
   if (!cycle.hasCycleData) {
     return (
-      <Card className="animate-fade-up-delay-1 flex h-full min-h-0 flex-col">
+      <Card className="flex h-full min-h-0 flex-col">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between gap-3">
             <CardTitle className="text-xl md:text-xl">Cycle overview</CardTitle>
@@ -57,7 +91,7 @@ export function CycleOverviewCard({
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               <Link
                 href="/cycle"
-                className={cn(buttonVariants({ variant: "default", size: "default" }))}
+                className={cn(buttonVariants({ variant: "default" }))}
               >
                 Log your period
               </Link>
@@ -74,30 +108,35 @@ export function CycleOverviewCard({
     );
   }
 
-  const progress =
-    cycle.currentDay && cycle.cycleLength
-      ? Math.min(100, Math.round((cycle.currentDay / cycle.cycleLength) * 100))
-      : null;
-
   return (
-    <Card className="animate-fade-up-delay-1 flex h-full min-h-0 flex-col">
+    <Card className="flex h-full min-h-0 flex-col">
       <CardHeader className="pb-2">
         <div className="flex flex-wrap items-center gap-2">
           <CardTitle className="text-xl md:text-xl">Cycle overview</CardTitle>
+          <Badge
+            variant={
+              status.presence === "started-today" ||
+              status.presence === "recorded-bleeding"
+                ? "rose"
+                : "outline"
+            }
+          >
+            {status.headline}
+          </Badge>
         </div>
-        <CardDescription>
-          Counted from your last logged start on or before today. Lengths come
-          from your recorded starts, not a standard 28-day cycle.
-        </CardDescription>
+        <CardDescription>{status.detail}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-1 flex-col gap-5">
         <div className="flex items-end justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">
-              {cycle.currentDay ? "Day" : "Cycle day"}
+              {status.presence === "started-today" ||
+              status.presence === "recorded-bleeding"
+                ? "Period day"
+                : "Cycle day"}
             </p>
             <p className="font-serif text-4xl tracking-tight text-plum sm:text-5xl">
-              {cycle.currentDay ?? "—"}
+              {day ?? "—"}
               {cycle.cycleLength ? (
                 <span className="text-xl text-muted-foreground sm:text-2xl">
                   /{cycle.cycleLength}
@@ -114,7 +153,7 @@ export function CycleOverviewCard({
           </Badge>
         </div>
 
-        {progress != null && cycle.cycleLength ? (
+        {progress != null && cycle.cycleLength && !pastTypical ? (
           <div>
             <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
               <span>
@@ -132,11 +171,16 @@ export function CycleOverviewCard({
               aria-label="Progress through typical recorded cycle length"
             >
               <div
-                className="h-full rounded-full bg-plum-soft transition-[width] duration-700 motion-reduce:transition-none"
+                className="h-full rounded-full bg-plum-soft"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
+        ) : pastTypical && cycle.cycleLength ? (
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            This is past your typical recorded length of {cycle.cycleLength}{" "}
+            days. Flowelle is not filling the gap with a 28-day cycle.
+          </p>
         ) : (
           <p className="text-sm leading-relaxed text-muted-foreground">
             Progress is shown after Flowelle can calculate a typical length from
@@ -144,17 +188,15 @@ export function CycleOverviewCard({
           </p>
         )}
 
-        {cycle.lastPeriodStart ? (
-          <p className="text-sm text-muted-foreground">
-            Last logged start:{" "}
-            <time dateTime={cycle.lastPeriodStart}>{cycle.lastPeriodStart}</time>
+        {status.futureStartCount > 0 ? (
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            {status.futureStartCount === 1
+              ? "One saved start is after today."
+              : `${status.futureStartCount} saved starts are after today.`}{" "}
+            They are not counted as a current period. Edit them in the tracker
+            if the date was a mistake.
           </p>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            The saved start dates are in the future, so today is not counted
-            from them.
-          </p>
-        )}
+        ) : null}
 
         {showCycleEstimate ? (
           <CycleEstimateSummary estimate={cycle.estimate} />

@@ -253,6 +253,80 @@ describe("buildCycleOverview", () => {
     assert.equal(overview.estimate.typicalLengthDays, 28);
   });
 
+  it("treats a start recorded today as period day 1", () => {
+    const overview = buildCycleOverview(
+      [period("a", "2026-03-01")],
+      "2026-03-01",
+    );
+
+    assert.equal(overview.periodStatus.presence, "started-today");
+    assert.equal(overview.periodStatus.cycleDay, 1);
+    assert.equal(overview.currentDay, 1);
+    assert.match(overview.periodStatus.headline, /period started/i);
+  });
+
+  it("does not treat a missing end date as an ongoing period", () => {
+    const overview = buildCycleOverview(
+      [period("a", "2026-02-20")],
+      "2026-03-01",
+    );
+
+    assert.equal(overview.periodStatus.presence, "end-unknown");
+    assert.equal(overview.periodStatus.cycleDay, 10);
+    assert.match(overview.periodStatus.detail, /end date is not recorded/i);
+  });
+
+  it("uses a recorded end date to show bleeding only while today is inside that range", () => {
+    const during = buildCycleOverview(
+      [period("a", "2026-03-01", "2026-03-05")],
+      "2026-03-03",
+    );
+    const after = buildCycleOverview(
+      [period("a", "2026-03-01", "2026-03-05")],
+      "2026-03-08",
+    );
+
+    assert.equal(during.periodStatus.presence, "recorded-bleeding");
+    assert.equal(during.periodStatus.cycleDay, 3);
+    assert.equal(after.periodStatus.presence, "cycle-day");
+    assert.equal(after.periodStatus.cycleDay, 8);
+    assert.match(after.periodStatus.detail, /ended on 2026-03-05/i);
+  });
+
+  it("never treats a future start as the current period", () => {
+    const overview = buildCycleOverview(
+      [period("a", "2026-04-01")],
+      "2026-03-01",
+    );
+
+    assert.equal(overview.periodStatus.presence, "future-only");
+    assert.equal(overview.periodStatus.cycleDay, null);
+    assert.equal(overview.periodStatus.futureStartCount, 1);
+  });
+
+  it("updates cycle day when a later start is added or an old start is removed", () => {
+    const before = buildCycleOverview(
+      [period("a", "2026-01-01", "2026-01-05")],
+      "2026-02-10",
+    );
+    const afterCorrection = buildCycleOverview(
+      [
+        period("a", "2026-01-01", "2026-01-05"),
+        period("b", "2026-02-01", "2026-02-05"),
+      ],
+      "2026-02-10",
+    );
+    const afterDelete = buildCycleOverview(
+      [period("a", "2026-01-01", "2026-01-05")],
+      "2026-02-10",
+    );
+
+    assert.equal(before.currentDay, 41);
+    assert.equal(afterCorrection.currentDay, 10);
+    assert.equal(afterCorrection.lastPeriodStart, "2026-02-01");
+    assert.deepEqual(afterDelete, before);
+  });
+
   it("returns the same overview for the same records so dashboard and tracker stay aligned", () => {
     const periods = [
       period("c", "2026-03-01"),

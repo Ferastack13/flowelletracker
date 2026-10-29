@@ -3,11 +3,10 @@ import { Suspense } from "react";
 import { CycleTracker } from "@/app/cycle/cycle-tracker";
 import { SymptomLog } from "@/app/cycle/symptom-log";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
-import { buildCycleOverview } from "@/lib/cycle";
 import { getSignedInEmail } from "@/lib/supabase/auth";
-import { listCyclePeriods } from "@/lib/supabase/cycle-periods";
+import { loadCyclePeriods } from "@/lib/supabase/cycle-periods";
 import { getProfile } from "@/lib/supabase/profiles";
-import { listSymptomLogs } from "@/lib/supabase/symptom-logs";
+import { loadSymptomLogs } from "@/lib/supabase/symptom-logs";
 import { emptyProfile } from "@/lib/profile";
 
 export const metadata: Metadata = {
@@ -30,20 +29,27 @@ export default function CyclePage() {
 
 async function CycleSession() {
   const email = await getSignedInEmail();
-  const periods = email ? await listCyclePeriods() : [];
-  const symptoms = email ? await listSymptomLogs() : [];
+  const loadedPeriods = email
+    ? await loadCyclePeriods()
+    : { periods: [], error: null };
+  const loadedSymptoms = email
+    ? await loadSymptomLogs()
+    : { entries: [], error: null };
   const profile = email ? await getProfile() : emptyProfile;
-  const overview = buildCycleOverview(periods);
 
   return (
     <div className="flex flex-col gap-6">
+      {loadedPeriods.error || loadedSymptoms.error ? (
+        <p className="text-sm text-destructive" role="alert">
+          {loadedPeriods.error ?? loadedSymptoms.error}
+        </p>
+      ) : null}
       <CycleTracker
         signedIn={Boolean(email)}
-        periods={periods}
-        overview={overview}
+        periods={loadedPeriods.periods}
         showCycleEstimate={profile.showCycleEstimate}
       />
-      {email ? <SymptomLog entries={symptoms} /> : null}
+      {email ? <SymptomLog entries={loadedSymptoms.entries} /> : null}
     </div>
   );
 }

@@ -16,9 +16,14 @@ function mapPeriod(row: CyclePeriodRow): CyclePeriod {
   };
 }
 
-export async function listCyclePeriods(): Promise<CyclePeriod[]> {
+export async function loadCyclePeriods(): Promise<{
+  periods: CyclePeriod[];
+  error: string | null;
+}> {
   const userId = await getSignedInUserId();
-  if (!userId) return [];
+  if (!userId) {
+    return { periods: [], error: null };
+  }
 
   const supabase = await createClient();
   const { data, error } = await supabase
@@ -28,6 +33,20 @@ export async function listCyclePeriods(): Promise<CyclePeriod[]> {
     .order("started_on", { ascending: false })
     .limit(24);
 
-  if (error || !data) return [];
-  return data.map((row) => mapPeriod(row as CyclePeriodRow));
+  if (error) {
+    return {
+      periods: [],
+      error: "Period dates could not be loaded. Refresh and try again.",
+    };
+  }
+
+  return {
+    periods: (data ?? []).map((row) => mapPeriod(row as CyclePeriodRow)),
+    error: null,
+  };
+}
+
+export async function listCyclePeriods(): Promise<CyclePeriod[]> {
+  const { periods } = await loadCyclePeriods();
+  return periods;
 }

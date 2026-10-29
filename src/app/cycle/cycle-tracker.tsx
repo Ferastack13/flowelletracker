@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   deletePeriodRecord,
@@ -21,10 +21,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CycleEstimateSummary } from "@/components/cycle/cycle-estimate-summary";
 import {
+  buildCycleOverview,
   intervalStatusLabel,
-  type CycleOverview,
   type CyclePeriod,
 } from "@/lib/cycle";
+import { formatLocalDate } from "@/lib/self-care";
 import { cn } from "@/lib/utils";
 
 const initialState: CycleActionState = { status: "idle", message: "" };
@@ -32,16 +33,19 @@ const initialState: CycleActionState = { status: "idle", message: "" };
 interface CycleTrackerProps {
   signedIn: boolean;
   periods: CyclePeriod[];
-  overview: CycleOverview;
   showCycleEstimate?: boolean;
 }
 
 export function CycleTracker({
   signedIn,
   periods,
-  overview,
   showCycleEstimate = true,
 }: CycleTrackerProps) {
+  const [today, setToday] = useState("");
+
+  useEffect(() => {
+    setToday(formatLocalDate(new Date()));
+  }, []);
   const [startState, startAction, startPending] = useActionState(
     logPeriodStart,
     initialState,
@@ -80,12 +84,25 @@ export function CycleTracker({
     );
   }
 
+  const overview = today ? buildCycleOverview(periods, today) : null;
   const historyById = new Map(
-    overview.history.map((item) => [item.period.id, item]),
+    (overview?.history ?? []).map((item) => [item.period.id, item]),
   );
 
   return (
     <div className="flex flex-col gap-6">
+    {overview ? (
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-xl md:text-xl">
+            {overview.periodStatus.headline}
+          </CardTitle>
+          <CardDescription>{overview.periodStatus.detail}</CardDescription>
+        </CardHeader>
+      </Card>
+    ) : (
+      <p className="text-sm text-muted-foreground">Checking today’s date…</p>
+    )}
     <div className="grid gap-6 lg:grid-cols-[1.15fr_1fr]">
       <Card>
         <CardHeader>
@@ -146,6 +163,12 @@ export function CycleTracker({
                     Started{" "}
                     <time dateTime={period.startedOn}>{period.startedOn}</time>
                   </p>
+                  {today && period.startedOn > today ? (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      This start is after today, so it is not used as a current
+                      period. Edit the date if it was entered by mistake.
+                    </p>
+                  ) : null}
                   {period.endedOn ? (
                     <p className="mt-1 text-xs text-muted-foreground">
                       Ended{" "}
@@ -296,12 +319,16 @@ export function CycleTracker({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {showCycleEstimate ? (
+          {overview && showCycleEstimate ? (
             <CycleEstimateSummary estimate={overview.estimate} />
-          ) : (
+          ) : overview ? (
             <p className="text-sm leading-relaxed text-muted-foreground">
               The next-period window is hidden in Settings. Lengths between
               recorded starts still appear above.
+            </p>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Checking today’s date…
             </p>
           )}
         </CardContent>
