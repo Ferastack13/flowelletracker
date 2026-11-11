@@ -407,8 +407,8 @@ export function SettingsExperience({
                 </Button>
               </form>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                There is no password in Flowelle. Use Google or a new email
-                link if you need to sign in again.
+                There is no password in Flowelle. Use Google, GitHub, or a new
+                email link if you need to sign in again.
               </p>
             </CardContent>
           </Card>

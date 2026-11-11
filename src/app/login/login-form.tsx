@@ -8,19 +8,20 @@ import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const [status, setStatus] = useState<
-    "idle" | "google" | "email" | "sent" | "error"
+    "idle" | "google" | "github" | "email" | "sent" | "error"
   >("idle");
   const [message, setMessage] = useState<string | null>(null);
-  const busy = status === "google" || status === "email";
+  const busy =
+    status === "google" || status === "github" || status === "email";
 
-  async function handleGoogle() {
-    setStatus("google");
+  async function handleOAuth(provider: "google" | "github") {
+    setStatus(provider);
     setMessage(null);
 
     try {
       const supabase = createClient();
       const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
+        provider,
         options: {
           redirectTo: `${window.location.origin}/auth/callback?next=/dashboard`,
         },
@@ -28,7 +29,7 @@ export function LoginForm() {
 
       if (error) {
         setStatus("error");
-        setMessage(googleSetupMessage(error.message));
+        setMessage(oauthSetupMessage(provider, error.message));
       }
     } catch (caught) {
       setStatus("error");
@@ -36,7 +37,7 @@ export function LoginForm() {
       setMessage(
         text.includes("Missing required Supabase")
           ? "The live site cannot reach Supabase yet. Check the Vercel environment variables, then redeploy."
-          : googleSetupMessage(text),
+          : oauthSetupMessage(provider, text),
       );
     }
   }
@@ -90,10 +91,20 @@ export function LoginForm() {
         variant="outline"
         className="w-full"
         disabled={busy}
-        onClick={handleGoogle}
+        onClick={() => handleOAuth("google")}
       >
         <GoogleMark />
         {status === "google" ? "Continuing…" : "Continue with Google"}
+      </Button>
+      <Button
+        type="button"
+        variant="outline"
+        className="w-full"
+        disabled={busy}
+        onClick={() => handleOAuth("github")}
+      >
+        <GitHubMark />
+        {status === "github" ? "Continuing…" : "Continue with GitHub"}
       </Button>
       <div className="flex items-center gap-3 text-[11px] tracking-[0.08em] text-muted-foreground uppercase">
         <span className="h-px flex-1 bg-border" />
@@ -132,15 +143,19 @@ export function LoginForm() {
         </p>
       ) : null}
       <p className="text-xs leading-relaxed text-muted-foreground">
-        New here? The same Google or email step creates your account. Period
-        dates, symptoms, and self-care then save there. Today’s note is
+        New here? The same Google, GitHub, or email step creates your account.
+        Period dates, symptoms, and self-care then save there. Today’s note is
         general, not personalised.
       </p>
     </form>
   );
 }
 
-function googleSetupMessage(detail: string): string {
+function oauthSetupMessage(
+  provider: "google" | "github",
+  detail: string,
+): string {
+  const label = provider === "github" ? "GitHub" : "Google";
   const lower = detail.toLowerCase();
   if (
     lower.includes("provider") ||
@@ -148,9 +163,20 @@ function googleSetupMessage(detail: string): string {
     lower.includes("disabled") ||
     lower.includes("validation")
   ) {
-    return "Google is not turned on in Supabase yet. Enable the Google provider, or use the email link.";
+    return `${label} is not turned on in Supabase yet. Enable the ${label} provider, or use the email link.`;
   }
-  return "Google sign-in could not start. Enable Google in Supabase Auth, or use the email link.";
+  return `${label} sign-in could not start. Enable ${label} in Supabase Auth, or use the email link.`;
+}
+
+function GitHubMark() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-4">
+      <path
+        fill="currentColor"
+        d="M12 1.5C6.2 1.5 1.5 6.24 1.5 12.1c0 4.69 2.97 8.66 7.1 10.06.52.1.71-.23.71-.51 0-.25-.01-.92-.01-1.8-2.89.64-3.5-1.42-3.5-1.42-.47-1.22-1.15-1.55-1.15-1.55-.94-.66.07-.65.07-.65 1.04.08 1.59 1.09 1.59 1.09.93 1.62 2.43 1.15 3.02.88.09-.69.36-1.15.66-1.42-2.31-.27-4.74-1.18-4.74-5.25 0-1.16.4-2.11 1.07-2.85-.11-.27-.46-1.36.1-2.84 0 0 .87-.28 2.85 1.09a9.6 9.6 0 0 1 5.18 0c1.98-1.37 2.85-1.09 2.85-1.09.56 1.48.21 2.57.1 2.84.67.74 1.07 1.69 1.07 2.85 0 4.08-2.44 4.97-4.76 5.23.37.33.71.97.71 1.96 0 1.42-.01 2.56-.01 2.91 0 .28.19.62.72.51A10.62 10.62 0 0 0 22.5 12.1C22.5 6.24 17.8 1.5 12 1.5Z"
+      />
+    </svg>
+  );
 }
 
 function GoogleMark() {
