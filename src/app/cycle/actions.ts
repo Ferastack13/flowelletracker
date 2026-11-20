@@ -27,6 +27,14 @@ export type CycleActionState = {
 function revalidateCycleSurfaces() {
   revalidatePath("/cycle");
   revalidatePath("/dashboard");
+  revalidatePath("/settings");
+}
+
+async function resyncReminders(userId: string) {
+  const { safeResyncUserReminders } = await import(
+    "@/lib/notifications/safe-resync"
+  );
+  await safeResyncUserReminders(userId);
 }
 
 async function loadOwnPeriods(
@@ -195,6 +203,7 @@ export async function logPeriodStart(
     return { status: "error", message: periodWriteErrorMessage(error.code) };
   }
 
+  await resyncReminders(userId);
   revalidateCycleSurfaces();
   return { status: "success", message: "Period start saved." };
 }
@@ -272,6 +281,7 @@ export async function savePeriodEnd(
     };
   }
 
+  await resyncReminders(userId);
   revalidateCycleSurfaces();
   return { status: "success", message: "Period end saved." };
 }
@@ -337,6 +347,7 @@ export async function updatePeriodRecord(
     };
   }
 
+  await resyncReminders(userId);
   revalidateCycleSurfaces();
   return { status: "success", message: "Period updated." };
 }
@@ -381,6 +392,7 @@ export async function deletePeriodRecord(
     };
   }
 
+  await resyncReminders(userId);
   revalidateCycleSurfaces();
   return { status: "success", message: "Period removed." };
 }
@@ -556,6 +568,7 @@ export async function completeCycleSetup(
 
   const { saveProfileFields } = await import("@/lib/supabase/profiles");
   const saved = await saveProfileFields({ usualCycleLengthDays });
+  await resyncReminders(userId);
   if (!saved.ok) {
     revalidateCycleSurfaces();
     return {

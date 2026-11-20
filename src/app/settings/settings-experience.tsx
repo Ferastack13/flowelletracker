@@ -14,6 +14,7 @@ import {
 import { signOut } from "@/app/auth/actions";
 import {
   deleteSavedRecords,
+  dismissReminderHistoryItem,
   exportMyData,
   saveCycleEstimatePreference,
   saveNotificationPreferences,
@@ -22,6 +23,8 @@ import {
   type ExportActionState,
   type SettingsActionState,
 } from "@/app/settings/actions";
+import type { NotificationDeliveryRow } from "@/lib/notifications/types";
+import { reminderTypeLabel } from "@/lib/notifications/types";
 import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
@@ -59,6 +62,7 @@ interface SettingsExperienceProps {
   signedIn: boolean;
   email: string | null;
   profile: UserProfile;
+  reminderHistory?: NotificationDeliveryRow[];
   loadError: string | null;
 }
 
@@ -72,6 +76,7 @@ export function SettingsExperience({
   signedIn,
   email,
   profile,
+  reminderHistory = [],
   loadError,
 }: SettingsExperienceProps) {
   const switchId = useId();
@@ -92,6 +97,10 @@ export function SettingsExperience({
   );
   const [notifyState, notifyAction, notifyPending] = useActionState(
     saveNotificationPreferences,
+    initialState,
+  );
+  const [historyState, historyAction, historyPending] = useActionState(
+    dismissReminderHistoryItem,
     initialState,
   );
   const [knowsLength, setKnowsLength] = useState(
@@ -373,11 +382,11 @@ export function SettingsExperience({
             <CardHeader>
               <CardTitle className="text-xl md:text-xl">Notifications</CardTitle>
               <CardDescription>
-                Choose what you would like Flowelle to remind you about later.
-                Preferences are saved now; delivery is not enabled yet.
+                Email reminders use discreet wording by default. Browser push is
+                not enabled in this phase.
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-5">
               <form action={notifyAction} className="space-y-3">
                 {(
                   [
@@ -398,7 +407,7 @@ export function SettingsExperience({
                     },
                     {
                       name: "checkinReminder",
-                      label: "Optional cycle check-in reminder",
+                      label: "Optional self-care reminder",
                       checked: profile.notifications.checkinReminder,
                     },
                   ] as const
@@ -420,15 +429,57 @@ export function SettingsExperience({
                         {item.label}
                       </span>
                       <span className="mt-1 block text-xs text-muted-foreground">
-                        Discreet wording later. No lock-screen details are sent
-                        yet.
+                        Subject lines stay discreet. Details stay in your
+                        account.
                       </span>
                     </span>
                   </label>
                 ))}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Timezone</Label>
+                    <Input
+                      id="timezone"
+                      name="timezone"
+                      defaultValue={profile.notifications.timezone}
+                      placeholder="Africa/Lagos"
+                      disabled={notifyPending}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredChannel">Delivery channel</Label>
+                    <Input
+                      id="preferredChannel"
+                      name="preferredChannel"
+                      value="email"
+                      readOnly
+                      disabled
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quietHoursStart">Quiet hours start</Label>
+                    <Input
+                      id="quietHoursStart"
+                      name="quietHoursStart"
+                      type="time"
+                      defaultValue={profile.notifications.quietHoursStart ?? ""}
+                      disabled={notifyPending}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="quietHoursEnd">Quiet hours end</Label>
+                    <Input
+                      id="quietHoursEnd"
+                      name="quietHoursEnd"
+                      type="time"
+                      defaultValue={profile.notifications.quietHoursEnd ?? ""}
+                      disabled={notifyPending}
+                    />
+                  </div>
+                </div>
                 <p className="text-xs leading-relaxed text-muted-foreground">
-                  Saving these toggles does not send email, push, or SMS. A
-                  delivery channel still needs to be built.
+                  Delivery needs Resend credentials and the hourly Vercel cron
+                  job. Clearing history does not disable future reminders.
                 </p>
                 <Button type="submit" variant="outline" disabled={notifyPending}>
                   {notifyPending ? "Saving…" : "Save reminder preferences"}
@@ -439,6 +490,54 @@ export function SettingsExperience({
                   </p>
                 ) : null}
               </form>
+
+              <div className="border-t border-border/60 pt-5">
+                <p className="text-sm font-medium text-plum">Recent reminders</p>
+                {reminderHistory.length === 0 ? (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    No reminder history yet.
+                  </p>
+                ) : (
+                  <ul className="mt-3 space-y-2">
+                    {reminderHistory.map((entry) => (
+                      <li
+                        key={entry.id}
+                        className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/70 bg-muted/20 px-3 py-2 text-sm"
+                      >
+                        <span>
+                          <span className="font-medium text-plum">
+                            {reminderTypeLabel(entry.reminderType)}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {entry.channel} · {entry.status} ·{" "}
+                            {new Date(entry.createdAt).toLocaleString()}
+                          </span>
+                        </span>
+                        <form action={historyAction}>
+                          <input
+                            type="hidden"
+                            name="deliveryId"
+                            value={entry.id}
+                          />
+                          <Button
+                            type="submit"
+                            size="sm"
+                            variant="ghost"
+                            disabled={historyPending}
+                          >
+                            Clear
+                          </Button>
+                        </form>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {historyState.message ? (
+                  <p className={`mt-2 ${statusClass(historyState.status)}`} role="status">
+                    {historyState.message}
+                  </p>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 

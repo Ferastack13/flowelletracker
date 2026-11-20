@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { SettingsExperience } from "@/app/settings/settings-experience";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { getSignedInEmail } from "@/lib/supabase/auth";
+import { loadNotificationHistory } from "@/lib/supabase/notification-history";
 import { loadProfile } from "@/lib/supabase/profiles";
 import { emptyProfile } from "@/lib/profile";
 
@@ -27,13 +28,17 @@ export default function SettingsPage() {
 async function SettingsSession() {
   const email = await getSignedInEmail();
   const loaded = email ? await loadProfile() : { profile: emptyProfile, error: null };
+  const history = email
+    ? await loadNotificationHistory()
+    : { entries: [], error: null };
 
   return (
     <SettingsExperience
       signedIn={Boolean(email)}
       email={email}
       profile={loaded.profile}
-      loadError={loaded.error}
+      reminderHistory={history.entries}
+      loadError={loaded.error ?? history.error}
     />
   );
 }

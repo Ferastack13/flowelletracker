@@ -7,6 +7,10 @@ export interface NotificationPreferences {
   ovulationReminder: boolean;
   fertileWindowReminder: boolean;
   checkinReminder: boolean;
+  timezone: string;
+  quietHoursStart: string | null;
+  quietHoursEnd: string | null;
+  preferredChannel: "email";
 }
 
 export interface UserProfile {
@@ -24,6 +28,10 @@ export const defaultNotificationPreferences: NotificationPreferences = {
   ovulationReminder: true,
   fertileWindowReminder: true,
   checkinReminder: true,
+  timezone: "UTC",
+  quietHoursStart: null,
+  quietHoursEnd: null,
+  preferredChannel: "email",
 };
 
 export const emptyProfile: UserProfile = {
@@ -123,6 +131,9 @@ export function parseNotificationPreferences(input: {
   ovulationReminder?: unknown;
   fertileWindowReminder?: unknown;
   checkinReminder?: unknown;
+  timezone?: unknown;
+  quietHoursStart?: unknown;
+  quietHoursEnd?: unknown;
 }): NotificationPreferences {
   const asBool = (value: unknown, fallback: boolean) => {
     if (typeof value === "boolean") return value;
@@ -130,6 +141,20 @@ export function parseNotificationPreferences(input: {
     if (value === "off" || value === "false" || value === "0") return false;
     return fallback;
   };
+
+  const timezone =
+    typeof input.timezone === "string" && input.timezone.trim()
+      ? input.timezone.trim()
+      : defaultNotificationPreferences.timezone;
+
+  const quietHoursStart =
+    typeof input.quietHoursStart === "string" && input.quietHoursStart.trim()
+      ? input.quietHoursStart.trim().slice(0, 5)
+      : null;
+  const quietHoursEnd =
+    typeof input.quietHoursEnd === "string" && input.quietHoursEnd.trim()
+      ? input.quietHoursEnd.trim().slice(0, 5)
+      : null;
 
   return {
     periodReminder: asBool(
@@ -148,5 +173,9 @@ export function parseNotificationPreferences(input: {
       input.checkinReminder,
       defaultNotificationPreferences.checkinReminder,
     ),
+    timezone,
+    quietHoursStart,
+    quietHoursEnd,
+    preferredChannel: "email",
   };
 }

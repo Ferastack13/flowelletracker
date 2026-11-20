@@ -21,6 +21,10 @@ interface ProfileRow {
   notify_ovulation_reminder: boolean | null;
   notify_fertile_window_reminder: boolean | null;
   notify_checkin_reminder: boolean | null;
+  timezone: string | null;
+  quiet_hours_start: string | null;
+  quiet_hours_end: string | null;
+  preferred_notify_channel: string | null;
   photo_path: string | null;
 }
 
@@ -67,6 +71,14 @@ function mapProfile(row: ProfileRow | null, photoUrl: string | null): UserProfil
       checkinReminder:
         row.notify_checkin_reminder ??
         defaultNotificationPreferences.checkinReminder,
+      timezone: row.timezone || defaultNotificationPreferences.timezone,
+      quietHoursStart: row.quiet_hours_start
+        ? String(row.quiet_hours_start).slice(0, 5)
+        : null,
+      quietHoursEnd: row.quiet_hours_end
+        ? String(row.quiet_hours_end).slice(0, 5)
+        : null,
+      preferredChannel: "email",
     },
     photoPath: row.photo_path,
     photoUrl,
@@ -74,7 +86,7 @@ function mapProfile(row: ProfileRow | null, photoUrl: string | null): UserProfil
 }
 
 const PROFILE_SELECT =
-  "display_name, self_care_intention, show_cycle_estimate, usual_cycle_length_days, notify_period_reminder, notify_ovulation_reminder, notify_fertile_window_reminder, notify_checkin_reminder, photo_path";
+  "display_name, self_care_intention, show_cycle_estimate, usual_cycle_length_days, notify_period_reminder, notify_ovulation_reminder, notify_fertile_window_reminder, notify_checkin_reminder, timezone, quiet_hours_start, quiet_hours_end, preferred_notify_channel, photo_path";
 
 export async function loadProfile(): Promise<{
   profile: UserProfile;
@@ -126,6 +138,10 @@ export async function upsertProfile(profile: UserProfile): Promise<boolean> {
       notify_fertile_window_reminder:
         profile.notifications.fertileWindowReminder,
       notify_checkin_reminder: profile.notifications.checkinReminder,
+      timezone: profile.notifications.timezone,
+      quiet_hours_start: profile.notifications.quietHoursStart,
+      quiet_hours_end: profile.notifications.quietHoursEnd,
+      preferred_notify_channel: profile.notifications.preferredChannel,
       photo_path: profile.photoPath,
       updated_at: new Date().toISOString(),
     },

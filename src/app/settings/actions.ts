@@ -17,6 +17,11 @@ import {
 } from "@/lib/profile";
 import { parseUsualCycleLength } from "@/lib/cycle-intelligence";
 import {
+  parseClockTime,
+  parseTimezone,
+} from "@/lib/notifications/time";
+import { dismissNotificationHistory } from "@/lib/supabase/notification-history";
+import {
   PROFILE_PHOTO_BUCKET,
   buildOwnedPhotoPath,
   inspectProfilePhoto,
@@ -140,6 +145,11 @@ export async function saveUsualCycleLengthPreference(
     };
   }
 
+  const { safeResyncUserReminders } = await import(
+    "@/lib/notifications/safe-resync"
+  );
+  await safeResyncUserReminders(userId);
+
   revalidateSettingsSurfaces();
   return {
     status: "success",
@@ -158,14 +168,45 @@ export async function saveNotificationPreferences(
     return { status: "error", message: "Sign in to save reminder preferences." };
   }
 
+  const timezone = parseTimezone(formData.get("timezone") ?? "UTC");
+  if (!timezone.ok) {
+    return { status: "error", message: timezone.message };
+  }
+  const quietStart = parseClockTime(formData.get("quietHoursStart"));
+  if (!quietStart.ok) {
+    return { status: "error", message: quietStart.message };
+  }
+  const quietEnd = parseClockTime(formData.get("quietHoursEnd"));
+  if (!quietEnd.ok) {
+    return { status: "error", message: quietEnd.message };
+  }
+  if (
+    (quietStart.value && !quietEnd.value) ||
+    (!quietStart.value && quietEnd.value)
+  ) {
+    return {
+      status: "error",
+      message: "Set both quiet-hours times, or leave both empty.",
+    };
+  }
+
+  const current = await getProfile();
   const notifications = parseNotificationPreferences({
     periodReminder: formData.get("periodReminder") === "on",
     ovulationReminder: formData.get("ovulationReminder") === "on",
     fertileWindowReminder: formData.get("fertileWindowReminder") === "on",
     checkinReminder: formData.get("checkinReminder") === "on",
+    timezone: timezone.value,
+    quietHoursStart: quietStart.value,
+    quietHoursEnd: quietEnd.value,
   });
 
-  const saved = await saveProfileFields({ notifications });
+  const saved = await saveProfileFields({
+    notifications: {
+      ...current.notifications,
+      ...notifications,
+    },
+  });
   if (!saved.ok) {
     return {
       status: "error",
@@ -173,12 +214,31 @@ export async function saveNotificationPreferences(
     };
   }
 
+  const { safeResyncUserReminders } = await import(
+    "@/lib/notifications/safe-resync"
+  );
+  await safeResyncUserReminders(userId);
+
   revalidateSettingsSurfaces();
   return {
     status: "success",
     message:
-      "Reminder preferences saved. Flowelle is not sending notifications yet — this only stores what you want later.",
+      "Reminder preferences saved. Email delivery runs on the server schedule when Resend credentials are configured.",
   };
+}
+
+export async function dismissReminderHistoryItem(
+  _previous: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const result = await dismissNotificationHistory(
+    String(formData.get("deliveryId") ?? ""),
+  );
+  if (!result.ok) {
+    return { status: "error", message: result.message };
+  }
+  revalidateSettingsSurfaces();
+  return { status: "success", message: result.message };
 }
 
 export async function uploadProfilePhoto(

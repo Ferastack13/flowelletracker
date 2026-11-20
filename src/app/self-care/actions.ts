@@ -101,8 +101,14 @@ export async function toggleSelfCarePillar(
     }
   }
 
+  const { safeResyncUserReminders } = await import(
+    "@/lib/notifications/safe-resync"
+  );
+  await safeResyncUserReminders(userId);
+
   revalidatePath("/self-care");
   revalidatePath("/dashboard");
+  revalidatePath("/settings");
   return {
     status: "success",
     message: pillarDone(next, pillar)
