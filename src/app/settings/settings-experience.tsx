@@ -16,7 +16,9 @@ import {
   deleteSavedRecords,
   exportMyData,
   saveCycleEstimatePreference,
+  saveNotificationPreferences,
   saveProfileSettings,
+  saveUsualCycleLengthPreference,
   type ExportActionState,
   type SettingsActionState,
 } from "@/app/settings/actions";
@@ -83,6 +85,17 @@ export function SettingsExperience({
   const [cycleState, cycleAction, cyclePending] = useActionState(
     saveCycleEstimatePreference,
     initialState,
+  );
+  const [lengthState, lengthAction, lengthPending] = useActionState(
+    saveUsualCycleLengthPreference,
+    initialState,
+  );
+  const [notifyState, notifyAction, notifyPending] = useActionState(
+    saveNotificationPreferences,
+    initialState,
+  );
+  const [knowsLength, setKnowsLength] = useState(
+    profile.usualCycleLengthDays != null,
   );
   const [exportState, exportAction, exportPending] = useActionState(
     exportMyData,
@@ -307,6 +320,52 @@ export function SettingsExperience({
                   </p>
                 ) : null}
               </form>
+              <form action={lengthAction} className="mt-5 space-y-3 border-t border-border/60 pt-5">
+                <div className="space-y-2">
+                  <Label htmlFor="knowsCycleLength">Usual cycle length</Label>
+                  <select
+                    id="knowsCycleLength"
+                    name="knowsCycleLength"
+                    className="flex h-11 w-full rounded-md border border-input bg-card px-3.5 py-2 text-sm"
+                    value={knowsLength ? "yes" : "no"}
+                    onChange={(event) =>
+                      setKnowsLength(event.target.value === "yes")
+                    }
+                    disabled={lengthPending}
+                  >
+                    <option value="yes">I know my usual cycle length</option>
+                    <option value="no">I do not know my usual cycle length</option>
+                  </select>
+                </div>
+                {knowsLength ? (
+                  <div className="space-y-2">
+                    <Label htmlFor="usualCycleLength">Days from start to start</Label>
+                    <Input
+                      id="usualCycleLength"
+                      name="usualCycleLength"
+                      type="number"
+                      min={14}
+                      max={60}
+                      defaultValue={profile.usualCycleLengthDays ?? ""}
+                      disabled={lengthPending}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Separate from period duration. Used only when recorded
+                      history is still thin.
+                    </p>
+                  </div>
+                ) : (
+                  <input type="hidden" name="usualCycleLength" value="unknown" />
+                )}
+                <Button type="submit" variant="outline" disabled={lengthPending}>
+                  {lengthPending ? "Saving…" : "Save usual length"}
+                </Button>
+                {lengthState.message ? (
+                  <p className={statusClass(lengthState.status)} role="status">
+                    {lengthState.message}
+                  </p>
+                ) : null}
+              </form>
             </CardContent>
           </Card>
 
@@ -314,20 +373,72 @@ export function SettingsExperience({
             <CardHeader>
               <CardTitle className="text-xl md:text-xl">Notifications</CardTitle>
               <CardDescription>
-                Get updates and reminders when they exist. Nothing is stored
-                here yet.
+                Choose what you would like Flowelle to remind you about later.
+                Preferences are saved now; delivery is not enabled yet.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-xl border border-border/70 bg-muted/25 px-4 py-3">
-                <p className="text-sm font-medium text-plum">
-                  Reminders are not available yet
+              <form action={notifyAction} className="space-y-3">
+                {(
+                  [
+                    {
+                      name: "periodReminder",
+                      label: "Upcoming period reminder",
+                      checked: profile.notifications.periodReminder,
+                    },
+                    {
+                      name: "ovulationReminder",
+                      label: "Estimated ovulation reminder",
+                      checked: profile.notifications.ovulationReminder,
+                    },
+                    {
+                      name: "fertileWindowReminder",
+                      label: "Estimated fertile-window reminder",
+                      checked: profile.notifications.fertileWindowReminder,
+                    },
+                    {
+                      name: "checkinReminder",
+                      label: "Optional cycle check-in reminder",
+                      checked: profile.notifications.checkinReminder,
+                    },
+                  ] as const
+                ).map((item) => (
+                  <label
+                    key={item.name}
+                    className="flex items-start gap-3 rounded-xl border border-border/70 bg-muted/25 px-4 py-3"
+                  >
+                    <input
+                      type="checkbox"
+                      name={item.name}
+                      value="on"
+                      defaultChecked={item.checked}
+                      disabled={notifyPending}
+                      className="mt-1"
+                    />
+                    <span>
+                      <span className="block text-sm font-medium text-plum">
+                        {item.label}
+                      </span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        Discreet wording later. No lock-screen details are sent
+                        yet.
+                      </span>
+                    </span>
+                  </label>
+                ))}
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Saving these toggles does not send email, push, or SMS. A
+                  delivery channel still needs to be built.
                 </p>
-                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                  Flowelle does not send email, push, or SMS. There are no
-                  notification toggles to promise a reminder.
-                </p>
-              </div>
+                <Button type="submit" variant="outline" disabled={notifyPending}>
+                  {notifyPending ? "Saving…" : "Save reminder preferences"}
+                </Button>
+                {notifyState.message ? (
+                  <p className={statusClass(notifyState.status)} role="status">
+                    {notifyState.message}
+                  </p>
+                ) : null}
+              </form>
             </CardContent>
           </Card>
 

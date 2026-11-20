@@ -11,7 +11,11 @@ import {
   saveProfileFields,
 } from "@/lib/supabase/profiles";
 import { createClient } from "@/lib/supabase/server";
-import { parseProfileIdentity } from "@/lib/profile";
+import {
+  parseNotificationPreferences,
+  parseProfileIdentity,
+} from "@/lib/profile";
+import { parseUsualCycleLength } from "@/lib/cycle-intelligence";
 import {
   PROFILE_PHOTO_BUCKET,
   buildOwnedPhotoPath,
@@ -106,6 +110,74 @@ export async function saveCycleEstimatePreference(
       formData.get("showCycleEstimate") === "on"
         ? "The next-period window will show when enough starts are recorded."
         : "The next-period window is hidden. Your logged dates are unchanged.",
+  };
+}
+
+export async function saveUsualCycleLengthPreference(
+  _previous: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { status: "error", message: "Sign in to save this preference." };
+  }
+
+  const knowsLength = String(formData.get("knowsCycleLength") ?? "") !== "no";
+  const parsed = knowsLength
+    ? parseUsualCycleLength(formData.get("usualCycleLength"))
+    : ({ ok: true, value: null } as const);
+  if (!parsed.ok) {
+    return { status: "error", message: parsed.message };
+  }
+
+  const saved = await saveProfileFields({
+    usualCycleLengthDays: parsed.value,
+  });
+  if (!saved.ok) {
+    return {
+      status: "error",
+      message: saved.error ?? "That preference could not be saved. Try again.",
+    };
+  }
+
+  revalidateSettingsSurfaces();
+  return {
+    status: "success",
+    message: parsed.value
+      ? `Usual cycle length saved as ${parsed.value} days. This is separate from period duration.`
+      : "Usual cycle length cleared. Flowelle will rely on recorded history when enough starts exist.",
+  };
+}
+
+export async function saveNotificationPreferences(
+  _previous: SettingsActionState,
+  formData: FormData,
+): Promise<SettingsActionState> {
+  const userId = await requireUserId();
+  if (!userId) {
+    return { status: "error", message: "Sign in to save reminder preferences." };
+  }
+
+  const notifications = parseNotificationPreferences({
+    periodReminder: formData.get("periodReminder") === "on",
+    ovulationReminder: formData.get("ovulationReminder") === "on",
+    fertileWindowReminder: formData.get("fertileWindowReminder") === "on",
+    checkinReminder: formData.get("checkinReminder") === "on",
+  });
+
+  const saved = await saveProfileFields({ notifications });
+  if (!saved.ok) {
+    return {
+      status: "error",
+      message: saved.error ?? "Those preferences could not be saved. Try again.",
+    };
+  }
+
+  revalidateSettingsSurfaces();
+  return {
+    status: "success",
+    message:
+      "Reminder preferences saved. Flowelle is not sending notifications yet — this only stores what you want later.",
   };
 }
 

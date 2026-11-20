@@ -1,54 +1,47 @@
 import Link from "next/link";
 import {
   CalendarDays,
+  ClipboardList,
   Droplets,
   Leaf,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type QuickAction =
-  | {
-      id: string;
-      label: string;
-      description: string;
-      icon: LucideIcon;
-      href: string;
-      available: true;
-    }
-  | {
-      id: string;
-      label: string;
-      description: string;
-      icon: LucideIcon;
-      available: false;
-      unavailableReason: string;
-    };
-
-const actions: QuickAction[] = [
+const actions: Array<{
+  id: string;
+  label: string;
+  description: string;
+  icon: LucideIcon;
+  href: string;
+}> = [
   {
     id: "period",
     label: "Log period",
-    description: "Open the cycle tracker",
+    description: "Start, end, and bleeding days",
     icon: Droplets,
     href: "/cycle",
-    available: true,
   },
   {
     id: "symptoms",
-    label: "Record symptoms",
+    label: "Log symptoms",
     description: "Open symptom logging",
-    icon: CalendarDays,
+    icon: ClipboardList,
     href: "/cycle#symptoms",
-    available: true,
   },
   {
-    id: "self-care",
-    label: "Open self-care",
-    description: "Habits and rituals",
+    id: "checkin",
+    label: "Daily check-in",
+    description: "Hydration, movement, rest",
     icon: Leaf,
     href: "/self-care",
-    available: true,
+  },
+  {
+    id: "history",
+    label: "Cycle history",
+    description: "Past periods and lengths",
+    icon: CalendarDays,
+    href: "/cycle#history",
   },
 ];
 
@@ -66,66 +59,34 @@ export function QuickActions() {
           Quick actions
         </h2>
         <p className="text-xs text-muted-foreground">
-          Shortcuts into the records you can keep.
+          Jump into the records you already keep in Flowelle.
         </p>
       </div>
-      <ul className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <ul className="grid grid-cols-2 gap-2 lg:grid-cols-4">
         {actions.map((action) => {
           const Icon = action.icon;
-          const baseClass = cn(
-            "group flex w-full min-w-0 items-center gap-3 rounded-xl border border-border/80 bg-card px-3.5 py-3 text-left shadow-soft transition-colors duration-200",
-            action.available
-              ? "hover:border-plum/25 hover:bg-muted/40"
-              : "cursor-not-allowed opacity-70",
-          );
-
-          const content = (
-            <>
-              <span
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-                  action.available
-                    ? "bg-rose-soft/55 text-plum"
-                    : "bg-secondary text-muted-foreground",
-                )}
-                aria-hidden="true"
-              >
-                <Icon className="size-4" />
-              </span>
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-plum">
-                  {action.label}
-                </span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {action.description}
-                </span>
-              </span>
-            </>
-          );
-
           return (
             <li key={action.id} className="min-w-0">
-              {action.available ? (
-                <Link
-                  href={action.href}
-                  className={cn(
-                    baseClass,
-                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
-                  )}
-                >
-                  {content}
-                </Link>
-              ) : (
-                <button
-                  type="button"
-                  disabled
-                  className={baseClass}
-                  aria-label={`${action.label} — ${action.unavailableReason}`}
-                  title={action.unavailableReason}
-                >
-                  {content}
-                </button>
-              )}
+              <Link
+                href={action.href}
+                className={cn(
+                  "group flex h-full min-w-0 flex-col gap-3 rounded-2xl border border-border/80 bg-card px-3.5 py-4 shadow-soft transition-colors duration-200",
+                  "hover:border-plum/25 hover:bg-muted/40",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
+                )}
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-soft/55 text-plum">
+                  <Icon className="size-4" aria-hidden="true" />
+                </span>
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-plum">
+                    {action.label}
+                  </span>
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {action.description}
+                  </span>
+                </span>
+              </Link>
             </li>
           );
         })}

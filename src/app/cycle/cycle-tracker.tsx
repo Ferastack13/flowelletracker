@@ -32,6 +32,7 @@ import {
   intervalStatusLabel,
   type CyclePeriod,
 } from "@/lib/cycle";
+import { buildCycleIntelligence } from "@/lib/cycle-intelligence";
 import { periodDurationDays } from "@/lib/cycle-records";
 import { formatLocalDate } from "@/lib/self-care";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ interface CycleTrackerProps {
   periods: CyclePeriod[];
   bleedingLogs: PeriodBleedingLog[];
   showCycleEstimate?: boolean;
+  usualCycleLengthDays?: number | null;
 }
 
 export function CycleTracker({
@@ -53,6 +55,7 @@ export function CycleTracker({
   periods,
   bleedingLogs,
   showCycleEstimate = true,
+  usualCycleLengthDays = null,
 }: CycleTrackerProps) {
   const [today, setToday] = useState("");
 
@@ -150,6 +153,13 @@ export function CycleTracker({
   }
 
   const overview = today ? buildCycleOverview(periods, today) : null;
+  const intelligence =
+    today
+      ? buildCycleIntelligence(periods, {
+          today,
+          usualCycleLengthDays,
+        })
+      : null;
   const historyById = new Map(
     (overview?.history ?? []).map((item) => [item.period.id, item]),
   );
@@ -599,18 +609,58 @@ export function CycleTracker({
           </CardContent>
         </Card>
       </div>
-      <Card>
+      <Card id="history" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="text-xl md:text-xl">Recorded cycles</CardTitle>
           <CardDescription>
             Cycle length is the days between consecutive starts. Period duration
-            is the inclusive bleeding span for one period.
+            is the inclusive bleeding span for one period. Dashboard estimates
+            use this same history.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {overview && showCycleEstimate ? (
-            <CycleEstimateSummary estimate={overview.estimate} />
-          ) : overview ? (
+        <CardContent className="space-y-4">
+          {intelligence && showCycleEstimate ? (
+            <>
+              <CycleEstimateSummary
+                estimate={{
+                  status:
+                    intelligence.nextPeriod.status === "reported"
+                      ? "limited"
+                      : intelligence.nextPeriod.status === "none"
+                        ? "none"
+                        : intelligence.nextPeriod.status,
+                  reason: intelligence.nextPeriod.reason,
+                  typicalLengthDays: intelligence.nextPeriod.typicalLengthDays,
+                  estimatedStart: intelligence.nextPeriod.estimatedStart,
+                  windowStart: intelligence.nextPeriod.windowStart,
+                  windowEnd: intelligence.nextPeriod.windowEnd,
+                  completedCyclesUsed:
+                    intelligence.nextPeriod.completedCyclesUsed,
+                }}
+              />
+              {intelligence.nextPeriod.source === "reported" ? (
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  Source: your reported usual cycle length (
+                  {intelligence.nextPeriod.typicalLengthDays} days), not multiple
+                  recorded cycles yet.
+                </p>
+              ) : null}
+              {intelligence.ovulation.status === "estimated" ? (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  Estimated ovulation:{" "}
+                  {intelligence.ovulation.windowStart ===
+                  intelligence.ovulation.windowEnd
+                    ? intelligence.ovulation.midpoint
+                    : `${intelligence.ovulation.windowStart} – ${intelligence.ovulation.windowEnd}`}
+                  . This cannot confirm ovulation.
+                </p>
+              ) : (
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {intelligence.ovulation.reason}
+                </p>
+              )}
+            </>
+          ) : overview && !showCycleEstimate ? (
             <p className="text-sm leading-relaxed text-muted-foreground">
               The next-period window is hidden in Settings. Lengths between
               recorded starts still appear above.

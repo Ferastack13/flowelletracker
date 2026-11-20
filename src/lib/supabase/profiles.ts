@@ -1,6 +1,11 @@
 import { createClient } from "@/lib/supabase/server";
 import { getSignedInUserId } from "@/lib/supabase/auth";
-import { emptyProfile, mergeProfileFields, type UserProfile } from "@/lib/profile";
+import {
+  defaultNotificationPreferences,
+  emptyProfile,
+  mergeProfileFields,
+  type UserProfile,
+} from "@/lib/profile";
 import {
   PROFILE_PHOTO_BUCKET,
   PROFILE_PHOTO_SIGNED_URL_SECONDS,
@@ -11,6 +16,11 @@ interface ProfileRow {
   display_name: string | null;
   self_care_intention: string | null;
   show_cycle_estimate: boolean;
+  usual_cycle_length_days: number | null;
+  notify_period_reminder: boolean | null;
+  notify_ovulation_reminder: boolean | null;
+  notify_fertile_window_reminder: boolean | null;
+  notify_checkin_reminder: boolean | null;
   photo_path: string | null;
 }
 
@@ -40,10 +50,31 @@ function mapProfile(row: ProfileRow | null, photoUrl: string | null): UserProfil
     displayName: row.display_name ?? "",
     selfCareIntention: row.self_care_intention ?? "",
     showCycleEstimate: row.show_cycle_estimate,
+    usualCycleLengthDays:
+      typeof row.usual_cycle_length_days === "number"
+        ? row.usual_cycle_length_days
+        : null,
+    notifications: {
+      periodReminder:
+        row.notify_period_reminder ??
+        defaultNotificationPreferences.periodReminder,
+      ovulationReminder:
+        row.notify_ovulation_reminder ??
+        defaultNotificationPreferences.ovulationReminder,
+      fertileWindowReminder:
+        row.notify_fertile_window_reminder ??
+        defaultNotificationPreferences.fertileWindowReminder,
+      checkinReminder:
+        row.notify_checkin_reminder ??
+        defaultNotificationPreferences.checkinReminder,
+    },
     photoPath: row.photo_path,
     photoUrl,
   };
 }
+
+const PROFILE_SELECT =
+  "display_name, self_care_intention, show_cycle_estimate, usual_cycle_length_days, notify_period_reminder, notify_ovulation_reminder, notify_fertile_window_reminder, notify_checkin_reminder, photo_path";
 
 export async function loadProfile(): Promise<{
   profile: UserProfile;
@@ -57,7 +88,7 @@ export async function loadProfile(): Promise<{
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("profiles")
-    .select("display_name, self_care_intention, show_cycle_estimate, photo_path")
+    .select(PROFILE_SELECT)
     .eq("user_id", userId)
     .maybeSingle();
 
@@ -89,6 +120,12 @@ export async function upsertProfile(profile: UserProfile): Promise<boolean> {
       display_name: profile.displayName || null,
       self_care_intention: profile.selfCareIntention || null,
       show_cycle_estimate: profile.showCycleEstimate,
+      usual_cycle_length_days: profile.usualCycleLengthDays,
+      notify_period_reminder: profile.notifications.periodReminder,
+      notify_ovulation_reminder: profile.notifications.ovulationReminder,
+      notify_fertile_window_reminder:
+        profile.notifications.fertileWindowReminder,
+      notify_checkin_reminder: profile.notifications.checkinReminder,
       photo_path: profile.photoPath,
       updated_at: new Date().toISOString(),
     },

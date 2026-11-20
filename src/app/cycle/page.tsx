@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CycleTracker } from "@/app/cycle/cycle-tracker";
 import { SymptomLog } from "@/app/cycle/symptom-log";
+import { CycleSetupCard } from "@/components/cycle/cycle-setup-card";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
 import { getSignedInEmail } from "@/lib/supabase/auth";
 import { loadBleedingLogs } from "@/lib/supabase/bleeding-logs";
@@ -52,11 +53,13 @@ async function CycleSession() {
           {loadError}
         </p>
       ) : null}
+      {email && loadedPeriods.periods.length === 0 ? <CycleSetupCard /> : null}
       <CycleTracker
         signedIn={Boolean(email)}
         periods={loadedPeriods.periods}
         bleedingLogs={loadedBleeding.entries}
         showCycleEstimate={profile.showCycleEstimate}
+        usualCycleLengthDays={profile.usualCycleLengthDays}
       />
       {email ? <SymptomLog entries={loadedSymptoms.entries} /> : null}
     </div>

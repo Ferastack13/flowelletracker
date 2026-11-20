@@ -9,6 +9,7 @@ import {
   bleedingWriteErrorMessage,
 } from "@/lib/bleeding";
 import { referenceDateToday, type CyclePeriod } from "@/lib/cycle";
+import { parseUsualCycleLength } from "@/lib/cycle-intelligence";
 import {
   findOverlappingPeriod,
   overlapConflictMessage,
@@ -505,4 +506,70 @@ export async function deleteBleedingLog(
 
   revalidateCycleSurfaces();
   return { status: "success", message: "Bleeding day removed." };
+}
+
+export async function completeCycleSetup(
+  _previous: CycleActionState,
+  formData: FormData,
+): Promise<CycleActionState> {
+  const userId = await getSignedInUserId();
+  if (!userId) {
+    return { status: "error", message: "Sign in to complete cycle setup." };
+  }
+
+  const parsed = parsePeriodWrite({
+    startedOn: formData.get("startedOn"),
+    endedOn: formData.get("endedOn"),
+  });
+  if (!parsed.ok) {
+    return { status: "error", message: parsed.message };
+  }
+
+  const lengthRaw = formData.get("usualCycleLength");
+  const knowsLength = String(formData.get("knowsCycleLength") ?? "") !== "no";
+  let usualCycleLengthDays: number | null = null;
+  if (knowsLength) {
+    const length = parseUsualCycleLength(lengthRaw);
+    if (!length.ok) {
+      return { status: "error", message: length.message };
+    }
+    usualCycleLengthDays = length.value;
+  }
+
+  const overlap = await assertNoOverlap({
+    userId,
+    startedOn: parsed.startedOn,
+    endedOn: parsed.endedOn,
+  });
+  if (overlap) return overlap;
+
+  const supabase = await createClient();
+  const { error } = await supabase.from("cycle_periods").insert({
+    user_id: userId,
+    started_on: parsed.startedOn,
+    ended_on: parsed.endedOn,
+  });
+
+  if (error) {
+    return { status: "error", message: periodWriteErrorMessage(error.code) };
+  }
+
+  const { saveProfileFields } = await import("@/lib/supabase/profiles");
+  const saved = await saveProfileFields({ usualCycleLengthDays });
+  if (!saved.ok) {
+    revalidateCycleSurfaces();
+    return {
+      status: "success",
+      message:
+        "Period dates were saved, but your usual cycle length could not be stored. You can add it in Settings.",
+    };
+  }
+
+  revalidateCycleSurfaces();
+  return {
+    status: "success",
+    message: usualCycleLengthDays
+      ? "Cycle setup saved. Estimates will use your reported length until more history is recorded."
+      : "Cycle setup saved. More period starts will help Flowelle estimate your next period.",
+  };
 }
