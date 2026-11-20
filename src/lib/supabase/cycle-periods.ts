@@ -31,7 +31,7 @@ export async function loadCyclePeriods(): Promise<{
     .select("id, started_on, ended_on")
     .eq("user_id", userId)
     .order("started_on", { ascending: false })
-    .limit(24);
+    .limit(60);
 
   if (error) {
     return {

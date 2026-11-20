@@ -294,9 +294,9 @@ function describePeriodStatus(input: {
   }
 
   return {
-    presence: "end-unknown",
-    headline: `Cycle day ${currentDay}`,
-    detail: `Counted from your last start on ${lastRecorded.startedOn}. An end date is not recorded, so Flowelle is not treating this as an ongoing period.`,
+    presence: "recorded-bleeding",
+    headline: "Period in progress",
+    detail: `Ongoing from ${lastRecorded.startedOn}. Add an end date when bleeding stops — Flowelle will not invent one.`,
     cycleDay: currentDay,
     futureStartCount,
   };

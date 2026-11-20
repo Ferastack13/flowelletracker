@@ -265,15 +265,16 @@ describe("buildCycleOverview", () => {
     assert.match(overview.periodStatus.headline, /period started/i);
   });
 
-  it("does not treat a missing end date as an ongoing period", () => {
+  it("treats a missing end date as an ongoing period", () => {
     const overview = buildCycleOverview(
       [period("a", "2026-02-20")],
       "2026-03-01",
     );
 
-    assert.equal(overview.periodStatus.presence, "end-unknown");
+    assert.equal(overview.periodStatus.presence, "recorded-bleeding");
     assert.equal(overview.periodStatus.cycleDay, 10);
-    assert.match(overview.periodStatus.detail, /end date is not recorded/i);
+    assert.match(overview.periodStatus.detail, /ongoing/i);
+    assert.match(overview.periodStatus.detail, /will not invent/i);
   });
 
   it("uses a recorded end date to show bleeding only while today is inside that range", () => {

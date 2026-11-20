@@ -217,30 +217,42 @@ export async function exportMyData(
   }
 
   const supabase = await createClient();
-  const [profile, periods, symptoms, checkins, bookmarks] = await Promise.all([
-    getProfile(),
-    supabase
-      .from("cycle_periods")
-      .select("id, started_on, ended_on")
-      .eq("user_id", userId)
-      .order("started_on", { ascending: false }),
-    supabase
-      .from("symptom_logs")
-      .select("id, logged_on, symptom, severity, notes")
-      .eq("user_id", userId)
-      .order("logged_on", { ascending: false }),
-    supabase
-      .from("self_care_checkins")
-      .select("id, checked_on, hydration, movement, sleep, personal_care")
-      .eq("user_id", userId)
-      .order("checked_on", { ascending: false }),
-    supabase
-      .from("learn_bookmarks")
-      .select("article_slug")
-      .eq("user_id", userId),
-  ]);
+  const [profile, periods, bleeding, symptoms, checkins, bookmarks] =
+    await Promise.all([
+      getProfile(),
+      supabase
+        .from("cycle_periods")
+        .select("id, started_on, ended_on")
+        .eq("user_id", userId)
+        .order("started_on", { ascending: false }),
+      supabase
+        .from("period_bleeding_logs")
+        .select("id, period_id, logged_on, intensity")
+        .eq("user_id", userId)
+        .order("logged_on", { ascending: false }),
+      supabase
+        .from("symptom_logs")
+        .select("id, logged_on, symptom, severity, notes")
+        .eq("user_id", userId)
+        .order("logged_on", { ascending: false }),
+      supabase
+        .from("self_care_checkins")
+        .select("id, checked_on, hydration, movement, sleep, personal_care")
+        .eq("user_id", userId)
+        .order("checked_on", { ascending: false }),
+      supabase
+        .from("learn_bookmarks")
+        .select("article_slug")
+        .eq("user_id", userId),
+    ]);
 
-  if (periods.error || symptoms.error || checkins.error || bookmarks.error) {
+  if (
+    periods.error ||
+    bleeding.error ||
+    symptoms.error ||
+    checkins.error ||
+    bookmarks.error
+  ) {
     return {
       status: "error",
       message: "Your export could not be prepared. Try again.",
@@ -251,6 +263,7 @@ export async function exportMyData(
     exportedAt: new Date().toISOString(),
     profile,
     cyclePeriods: periods.data ?? [],
+    bleedingLogs: bleeding.data ?? [],
     symptomLogs: symptoms.data ?? [],
     selfCareCheckins: checkins.data ?? [],
     savedGuides: (bookmarks.data ?? []).map((row) =>

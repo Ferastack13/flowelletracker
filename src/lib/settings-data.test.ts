@@ -87,6 +87,7 @@ describe("deletion confirmation and leftovers", () => {
 
   it("is incomplete when any user-owned table still has rows", () => {
     const leftover = interpretDeletion({
+      period_bleeding_logs: 0,
       cycle_periods: 0,
       symptom_logs: 2,
       self_care_checkins: 0,
@@ -99,6 +100,7 @@ describe("deletion confirmation and leftovers", () => {
 
   it("treats a missing count as leftover instead of empty", () => {
     const leftover = interpretDeletion({
+      period_bleeding_logs: 0,
       cycle_periods: 0,
       symptom_logs: 0,
       self_care_checkins: 0,
@@ -110,6 +112,7 @@ describe("deletion confirmation and leftovers", () => {
 
   it("is complete only when every table is empty", () => {
     const done = interpretDeletion({
+      period_bleeding_logs: 0,
       cycle_periods: 0,
       symptom_logs: 0,
       self_care_checkins: 0,

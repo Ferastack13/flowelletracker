@@ -1,4 +1,5 @@
 export const RECORD_TABLES = [
+  "period_bleeding_logs",
   "cycle_periods",
   "symptom_logs",
   "self_care_checkins",
@@ -12,6 +13,13 @@ export interface ExportPeriod {
   id: string;
   startedOn: string;
   endedOn: string | null;
+}
+
+export interface ExportBleedingLog {
+  id: string;
+  periodId: string;
+  loggedOn: string;
+  intensity: string;
 }
 
 export interface ExportSymptom {
@@ -40,6 +48,7 @@ export interface PersonalExport {
     hasProfilePhoto: boolean;
   };
   cyclePeriods: ExportPeriod[];
+  bleedingLogs: ExportBleedingLog[];
   symptomLogs: ExportSymptom[];
   selfCareCheckins: ExportCheckin[];
   savedGuides: string[];
@@ -79,6 +88,7 @@ export function buildPersonalExport(input: {
     photoPath?: string | null;
   };
   cyclePeriods: Array<Record<string, unknown>>;
+  bleedingLogs?: Array<Record<string, unknown>>;
   symptomLogs: Array<Record<string, unknown>>;
   selfCareCheckins: Array<Record<string, unknown>>;
   savedGuides?: string[];
@@ -94,6 +104,16 @@ export function buildPersonalExport(input: {
           : typeof safe.endedOn === "string"
             ? safe.endedOn
             : null,
+    };
+  });
+
+  const bleedingLogs = (input.bleedingLogs ?? []).map((row) => {
+    const safe = omitInternalKeys(row);
+    return {
+      id: String(safe.id ?? ""),
+      periodId: String(safe.period_id ?? safe.periodId ?? ""),
+      loggedOn: String(safe.logged_on ?? safe.loggedOn ?? ""),
+      intensity: String(safe.intensity ?? ""),
     };
   });
 
@@ -129,6 +149,7 @@ export function buildPersonalExport(input: {
       hasProfilePhoto: Boolean(input.profile.photoPath),
     },
     cyclePeriods,
+    bleedingLogs,
     symptomLogs,
     selfCareCheckins,
     savedGuides: (input.savedGuides ?? []).filter(
@@ -140,6 +161,7 @@ export function buildPersonalExport(input: {
     !document.profile.displayName &&
     !document.profile.selfCareIntention &&
     document.cyclePeriods.length === 0 &&
+    document.bleedingLogs.length === 0 &&
     document.symptomLogs.length === 0 &&
     document.selfCareCheckins.length === 0 &&
     document.savedGuides.length === 0;
