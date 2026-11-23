@@ -100,6 +100,29 @@ describe("planRemindersForUser", () => {
     });
     assert.equal(planned.length, 0);
   });
+
+  it("catches up a missed morning check-in later the same day", () => {
+    const now = new Date("2026-11-20T15:30:00.000Z");
+    const planned = planRemindersForUser({
+      periods: [],
+      prefs: {
+        ...basePrefs,
+        periodReminder: false,
+        ovulationReminder: false,
+        fertileWindowReminder: false,
+        checkinReminder: true,
+      },
+      today: "2026-11-20",
+      hasCompletedCheckinToday: false,
+      now,
+    });
+    assert.equal(planned.length, 1);
+    assert.equal(planned[0]?.reminderType, "checkin");
+    assert.equal(planned[0]?.eventDate, "2026-11-20");
+    assert.ok(
+      new Date(planned[0]!.scheduledForIso).getTime() >= now.getTime() - 60_000,
+    );
+  });
 });
 
 describe("quiet hours and timezone parsing", () => {

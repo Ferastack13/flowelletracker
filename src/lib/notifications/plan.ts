@@ -128,19 +128,26 @@ export function planRemindersForUser(input: {
   }
 
   if (input.prefs.checkinReminder && !input.hasCompletedCheckinToday) {
-    const scheduledFor = scheduleLocalMorning({
+    let scheduledFor = scheduleLocalMorning({
       calendarDate: today,
       prefs: input.prefs,
     });
-    if (scheduledFor.getTime() >= now.getTime() - 60_000) {
-      planned.push({
-        reminderType: "checkin",
-        channel: "email",
-        eventDate: today,
-        scheduledForIso: scheduledFor.toISOString(),
-        dedupeKey: makeDedupeKey("checkin", today),
+    // If the morning slot already passed, catch up later the same day.
+    if (scheduledFor.getTime() < now.getTime() - 60_000) {
+      scheduledFor = adjustForQuietHours({
+        scheduledFor: now,
+        timeZone: input.prefs.timezone,
+        quietHoursStart: input.prefs.quietHoursStart,
+        quietHoursEnd: input.prefs.quietHoursEnd,
       });
     }
+    planned.push({
+      reminderType: "checkin",
+      channel: "email",
+      eventDate: today,
+      scheduledForIso: scheduledFor.toISOString(),
+      dedupeKey: makeDedupeKey("checkin", today),
+    });
   }
 
   return planned;
