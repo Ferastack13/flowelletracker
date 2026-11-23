@@ -6,7 +6,11 @@ export type SymptomId =
   | "bloating"
   | "fatigue"
   | "mood-changes"
-  | "breast-tenderness";
+  | "breast-tenderness"
+  | "acne"
+  | "back-pain"
+  | "food-cravings"
+  | "nausea";
 
 export type SymptomSeverity = 1 | 2 | 3 | 4 | 5;
 
@@ -17,6 +21,10 @@ export const SYMPTOM_OPTIONS = [
   { id: "fatigue", name: "Fatigue" },
   { id: "mood-changes", name: "Mood changes" },
   { id: "breast-tenderness", name: "Breast tenderness" },
+  { id: "acne", name: "Acne" },
+  { id: "back-pain", name: "Back pain" },
+  { id: "food-cravings", name: "Food cravings" },
+  { id: "nausea", name: "Nausea" },
 ] as const satisfies ReadonlyArray<{ id: SymptomId; name: string }>;
 
 export const SYMPTOM_SEVERITIES = [

@@ -10,7 +10,6 @@ import {
   formatUtcDate,
   hasAnySelfCarePillar,
   isSelfCarePillarId,
-  pillarDone,
   toggleSelfCarePillarState,
   type SelfCarePillarId,
 } from "@/lib/self-care";
@@ -18,13 +17,6 @@ import {
 export type SelfCareActionState = {
   status: "idle" | "error" | "success";
   message: string;
-};
-
-const SELF_CARE_PILLAR_NAMES: Record<SelfCarePillarId, string> = {
-  hydration: "Hydration",
-  movement: "Movement",
-  sleep: "Sleep",
-  "personal-care": "Personal care",
 };
 
 function readDate(value: FormDataEntryValue | null): string | null {
@@ -109,10 +101,70 @@ export async function toggleSelfCarePillar(
   revalidatePath("/self-care");
   revalidatePath("/dashboard");
   revalidatePath("/settings");
-  return {
-    status: "success",
-    message: pillarDone(next, pillar)
-      ? `${SELF_CARE_PILLAR_NAMES[pillar]} marked for ${checkedOn}.`
-      : `${SELF_CARE_PILLAR_NAMES[pillar]} cleared for ${checkedOn}.`,
-  };
+  return { status: "success", message: "Saved" };
+}
+
+export async function toggleWellnessActivity(
+  _previous: SelfCareActionState,
+  formData: FormData,
+): Promise<SelfCareActionState> {
+  const userId = await getSignedInUserId();
+  if (!userId) {
+    return {
+      status: "error",
+      message: "Sign in to update wellness activities.",
+    };
+  }
+
+  const localDate = readDate(formData.get("localDate"));
+  const recommendationId = String(formData.get("recommendationId") ?? "").trim();
+  const shouldComplete = formData.get("completed") === "on";
+
+  if (!localDate || !isAllowedCheckinDate(localDate)) {
+    return { status: "error", message: "Choose a valid date." };
+  }
+
+  const { isWellnessRecommendationId } = await import(
+    "@/lib/wellness/recommendations"
+  );
+  if (!isWellnessRecommendationId(recommendationId)) {
+    return { status: "error", message: "That activity could not be updated." };
+  }
+
+  const supabase = await createClient();
+
+  if (shouldComplete) {
+    const { error } = await supabase.from("self_care_activity_completions").upsert(
+      {
+        user_id: userId,
+        local_date: localDate,
+        recommendation_id: recommendationId,
+        completed_at: new Date().toISOString(),
+      },
+      { onConflict: "user_id,local_date,recommendation_id" },
+    );
+    if (error) {
+      return {
+        status: "error",
+        message: "That activity could not be saved. Try again.",
+      };
+    }
+  } else {
+    const { error } = await supabase
+      .from("self_care_activity_completions")
+      .delete()
+      .eq("user_id", userId)
+      .eq("local_date", localDate)
+      .eq("recommendation_id", recommendationId);
+    if (error) {
+      return {
+        status: "error",
+        message: "That activity could not be cleared. Try again.",
+      };
+    }
+  }
+
+  revalidatePath("/self-care");
+  revalidatePath("/dashboard");
+  return { status: "success", message: "Saved" };
 }

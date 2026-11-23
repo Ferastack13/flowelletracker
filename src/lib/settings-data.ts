@@ -3,6 +3,7 @@ export const RECORD_TABLES = [
   "cycle_periods",
   "symptom_logs",
   "self_care_checkins",
+  "self_care_activity_completions",
   "learn_bookmarks",
   "profiles",
 ] as const;

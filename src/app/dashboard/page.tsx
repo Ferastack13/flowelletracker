@@ -11,15 +11,19 @@ import { TodayInsightsCard } from "@/components/dashboard/today-insights-card";
 import { UpcomingCycleEvents } from "@/components/dashboard/upcoming-cycle-events";
 import { WelcomeBanner } from "@/components/dashboard/welcome-banner";
 import { AppShellWithAuth } from "@/components/layout/app-shell-with-auth";
+import { DailyWellnessPanel } from "@/components/wellness/daily-wellness-panel";
 import { referenceDateToday } from "@/lib/cycle";
 import { buildCycleIntelligence } from "@/lib/cycle-intelligence";
 import { emptyProfile } from "@/lib/profile";
+import { zonedCalendarDate } from "@/lib/notifications/time";
 import { getSignedInEmail } from "@/lib/supabase/auth";
 import { loadBleedingLogs } from "@/lib/supabase/bleeding-logs";
 import { loadCyclePeriods } from "@/lib/supabase/cycle-periods";
 import { getProfile } from "@/lib/supabase/profiles";
 import { loadSelfCareCheckins } from "@/lib/supabase/self-care-checkins";
 import { loadSymptomLogs } from "@/lib/supabase/symptom-logs";
+import { loadWellnessCompletionsForDate } from "@/lib/supabase/wellness-activities";
+import { buildDailyWellnessPlan } from "@/lib/wellness/daily";
 
 export const metadata: Metadata = {
   title: "Dashboard",
@@ -52,12 +56,31 @@ async function DashboardSession() {
     ? await loadSymptomLogs()
     : { entries: [], error: null };
   const profile = signedIn ? await getProfile() : emptyProfile;
+  const todayLocal = zonedCalendarDate(
+    new Date(),
+    profile.notifications.timezone || "UTC",
+  );
+  const wellnessCompletions = signedIn
+    ? await loadWellnessCompletionsForDate(todayLocal)
+    : { completions: [], completedIds: [], error: null };
   const loadError =
-    periods.error ?? bleeding.error ?? checkins.error ?? symptoms.error;
+    periods.error ??
+    bleeding.error ??
+    checkins.error ??
+    symptoms.error ??
+    wellnessCompletions.error;
 
   const intelligence = buildCycleIntelligence(periods.periods, {
     today: referenceDateToday(),
     usualCycleLengthDays: profile.usualCycleLengthDays,
+  });
+  const wellness = buildDailyWellnessPlan({
+    periods: periods.periods,
+    today: todayLocal,
+    usualCycleLengthDays: profile.usualCycleLengthDays,
+    symptomEntries: symptoms.entries,
+    completedIds: wellnessCompletions.completedIds,
+    limit: 4,
   });
 
   const needsSetup = signedIn && periods.periods.length === 0;
@@ -105,6 +128,15 @@ async function DashboardSession() {
         ovulation={intelligence.ovulation}
         fertileWindow={intelligence.fertileWindow}
         showEstimates={profile.showCycleEstimate}
+      />
+
+      <DailyWellnessPanel
+        signedIn={signedIn}
+        today={wellness.today}
+        phase={wellness.phase}
+        recommendations={wellness.recommendations}
+        progress={wellness.progress}
+        compact
       />
 
       <div className="grid min-w-0 gap-5 lg:grid-cols-2 lg:items-stretch lg:gap-6">
