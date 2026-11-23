@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useId, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   BellOff,
   Download,
@@ -79,6 +80,7 @@ export function SettingsExperience({
   reminderHistory = [],
   loadError,
 }: SettingsExperienceProps) {
+  const router = useRouter();
   const switchId = useId();
   const [displayName, setDisplayName] = useState(profile.displayName);
   const [intention, setIntention] = useState(profile.selfCareIntention);
@@ -119,6 +121,33 @@ export function SettingsExperience({
     setDisplayName(profile.displayName);
     setIntention(profile.selfCareIntention);
   }, [profile.displayName, profile.selfCareIntention]);
+
+  useEffect(() => {
+    if (saveState.status === "success") {
+      setClientError(null);
+    }
+  }, [saveState.status]);
+
+  useEffect(() => {
+    const leaveAfterSave = [
+      saveState.status,
+      cycleState.status,
+      lengthState.status,
+      notifyState.status,
+    ].includes("success");
+    if (!leaveAfterSave) return;
+
+    const timer = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [
+    saveState.status,
+    cycleState.status,
+    lengthState.status,
+    notifyState.status,
+    router,
+  ]);
 
   useEffect(() => {
     if (!exportState.payload || !exportState.filename || !exportState.exportId) {

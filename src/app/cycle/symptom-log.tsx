@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   createSymptomLog,
   deleteSymptomLog,
@@ -39,6 +40,7 @@ interface SymptomLogProps {
 }
 
 export function SymptomLog({ entries }: SymptomLogProps) {
+  const router = useRouter();
   const [today, setToday] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
@@ -72,6 +74,25 @@ export function SymptomLog({ entries }: SymptomLogProps) {
       setConfirmingId(null);
     }
   }, [deleteState]);
+
+  useEffect(() => {
+    const leaveAfterSave = [
+      createState.status,
+      updateState.status,
+      deleteState.status,
+    ].includes("success");
+    if (!leaveAfterSave) return;
+
+    const timer = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [
+    createState.status,
+    updateState.status,
+    deleteState.status,
+    router,
+  ]);
 
   return (
     <div id="symptoms" className="grid scroll-mt-24 gap-6 lg:grid-cols-[1.15fr_1fr]">

@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   completeCycleSetup,
   type CycleActionState,
@@ -22,11 +23,20 @@ const fieldClassName =
   "flex h-11 w-full rounded-md border border-input bg-card px-3.5 py-2 text-sm text-foreground shadow-soft transition-colors disabled:cursor-not-allowed disabled:opacity-50";
 
 export function CycleSetupCard() {
+  const router = useRouter();
   const [state, action, pending] = useActionState(
     completeCycleSetup,
     initialState,
   );
   const [knowsLength, setKnowsLength] = useState(true);
+
+  useEffect(() => {
+    if (state.status !== "success") return;
+    const timer = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [state.status, router]);
 
   return (
     <Card className="border-rose/30 bg-gradient-to-br from-rose-soft/20 via-card to-ivory-warm/40">

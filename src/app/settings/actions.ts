@@ -86,7 +86,7 @@ export async function saveProfileSettings(
   }
 
   revalidateSettingsSurfaces();
-  return { status: "success", message: "Profile saved." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function saveCycleEstimatePreference(
@@ -109,13 +109,7 @@ export async function saveCycleEstimatePreference(
   }
 
   revalidateSettingsSurfaces();
-  return {
-    status: "success",
-    message:
-      formData.get("showCycleEstimate") === "on"
-        ? "The next-period window will show when enough starts are recorded."
-        : "The next-period window is hidden. Your logged dates are unchanged.",
-  };
+  return { status: "success", message: "Saved" };
 }
 
 export async function saveUsualCycleLengthPreference(
@@ -151,12 +145,7 @@ export async function saveUsualCycleLengthPreference(
   await safeResyncUserReminders(userId);
 
   revalidateSettingsSurfaces();
-  return {
-    status: "success",
-    message: parsed.value
-      ? `Usual cycle length saved as ${parsed.value} days. This is separate from period duration.`
-      : "Usual cycle length cleared. Flowelle will rely on recorded history when enough starts exist.",
-  };
+  return { status: "success", message: "Saved" };
 }
 
 export async function saveNotificationPreferences(
@@ -220,11 +209,7 @@ export async function saveNotificationPreferences(
   await safeResyncUserReminders(userId);
 
   revalidateSettingsSurfaces();
-  return {
-    status: "success",
-    message:
-      "Reminder preferences saved. Email delivery runs on the server schedule when Resend credentials are configured.",
-  };
+  return { status: "success", message: "Saved" };
 }
 
 export async function dismissReminderHistoryItem(
@@ -306,7 +291,7 @@ export async function uploadProfilePhoto(
   }
 
   revalidateSettingsSurfaces();
-  return { status: "success", message: "Profile photo saved." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function removeProfilePhoto(): Promise<SettingsActionState> {
@@ -336,7 +321,7 @@ export async function removeProfilePhoto(): Promise<SettingsActionState> {
   }
 
   revalidateSettingsSurfaces();
-  return { status: "success", message: "Profile photo removed." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function exportMyData(

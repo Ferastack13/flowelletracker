@@ -205,7 +205,7 @@ export async function logPeriodStart(
 
   await resyncReminders(userId);
   revalidateCycleSurfaces();
-  return { status: "success", message: "Period start saved." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function savePeriodEnd(
@@ -283,7 +283,7 @@ export async function savePeriodEnd(
 
   await resyncReminders(userId);
   revalidateCycleSurfaces();
-  return { status: "success", message: "Period end saved." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function updatePeriodRecord(
@@ -349,7 +349,7 @@ export async function updatePeriodRecord(
 
   await resyncReminders(userId);
   revalidateCycleSurfaces();
-  return { status: "success", message: "Period updated." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function deletePeriodRecord(
@@ -394,7 +394,7 @@ export async function deletePeriodRecord(
 
   await resyncReminders(userId);
   revalidateCycleSurfaces();
-  return { status: "success", message: "Period removed." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function upsertBleedingLog(
@@ -459,7 +459,7 @@ export async function upsertBleedingLog(
     }
 
     revalidateCycleSurfaces();
-    return { status: "success", message: "Bleeding day updated." };
+    return { status: "success", message: "Saved" };
   }
 
   const { error } = await supabase.from("period_bleeding_logs").insert({
@@ -474,7 +474,7 @@ export async function upsertBleedingLog(
   }
 
   revalidateCycleSurfaces();
-  return { status: "success", message: "Bleeding day saved." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function deleteBleedingLog(
@@ -517,7 +517,7 @@ export async function deleteBleedingLog(
   }
 
   revalidateCycleSurfaces();
-  return { status: "success", message: "Bleeding day removed." };
+  return { status: "success", message: "Saved" };
 }
 
 export async function completeCycleSetup(
@@ -571,18 +571,9 @@ export async function completeCycleSetup(
   await resyncReminders(userId);
   if (!saved.ok) {
     revalidateCycleSurfaces();
-    return {
-      status: "success",
-      message:
-        "Period dates were saved, but your usual cycle length could not be stored. You can add it in Settings.",
-    };
+    return { status: "success", message: "Saved" };
   }
 
   revalidateCycleSurfaces();
-  return {
-    status: "success",
-    message: usualCycleLengthDays
-      ? "Cycle setup saved. Estimates will use your reported length until more history is recorded."
-      : "Cycle setup saved. More period starts will help Flowelle estimate your next period.",
-  };
+  return { status: "success", message: "Saved" };
 }

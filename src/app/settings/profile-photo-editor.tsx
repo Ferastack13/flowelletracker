@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useId, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   removeProfilePhoto,
   uploadProfilePhoto,
@@ -25,6 +26,7 @@ export function ProfilePhotoEditor({
   displayName,
   photoUrl,
 }: ProfilePhotoEditorProps) {
+  const router = useRouter();
   const inputId = useId();
   const inputRef = useRef<HTMLInputElement>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -50,6 +52,17 @@ export function ProfilePhotoEditor({
       clearSelection();
     }
   }, [uploadState.status]);
+
+  useEffect(() => {
+    const leaveAfterSave =
+      uploadState.status === "success" || removeState.status === "success";
+    if (!leaveAfterSave) return;
+
+    const timer = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [uploadState.status, removeState.status, router]);
 
   function clearSelection() {
     if (previewUrl) URL.revokeObjectURL(previewUrl);

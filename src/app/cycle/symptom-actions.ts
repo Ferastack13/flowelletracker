@@ -8,7 +8,6 @@ import {
   SYMPTOM_NOTE_MAX_LENGTH,
   isSymptomId,
   isSymptomSeverity,
-  symptomName,
   type SymptomId,
   type SymptomSeverity,
 } from "@/lib/symptoms";
@@ -131,10 +130,7 @@ export async function createSymptomLog(
   }
 
   revalidateSymptomPaths();
-  return {
-    status: "success",
-    message: `${symptomName(fields.symptom)} saved for ${fields.loggedOn}.`,
-  };
+  return { status: "success", message: "Saved" };
 }
 
 export async function updateSymptomLog(
@@ -185,10 +181,7 @@ export async function updateSymptomLog(
   }
 
   revalidateSymptomPaths();
-  return {
-    status: "success",
-    message: `${symptomName(fields.symptom)} updated for ${fields.loggedOn}.`,
-  };
+  return { status: "success", message: "Saved" };
 }
 
 export async function deleteSymptomLog(
@@ -228,5 +221,5 @@ export async function deleteSymptomLog(
   }
 
   revalidateSymptomPaths();
-  return { status: "success", message: "Symptom entry removed." };
+  return { status: "success", message: "Saved" };
 }

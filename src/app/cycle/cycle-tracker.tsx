@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   deleteBleedingLog,
   deletePeriodRecord,
@@ -57,6 +58,7 @@ export function CycleTracker({
   showCycleEstimate = true,
   usualCycleLengthDays = null,
 }: CycleTrackerProps) {
+  const router = useRouter();
   const [today, setToday] = useState("");
 
   useEffect(() => {
@@ -110,6 +112,31 @@ export function CycleTracker({
       setConfirmingBleedId(null);
     }
   }, [bleedingDeleteState]);
+
+  useEffect(() => {
+    const leaveAfterSave = [
+      startState.status,
+      endState.status,
+      updateState.status,
+      deleteState.status,
+      bleedingState.status,
+      bleedingDeleteState.status,
+    ].includes("success");
+    if (!leaveAfterSave) return;
+
+    const timer = window.setTimeout(() => {
+      router.push("/dashboard");
+    }, 2000);
+    return () => window.clearTimeout(timer);
+  }, [
+    startState.status,
+    endState.status,
+    updateState.status,
+    deleteState.status,
+    bleedingState.status,
+    bleedingDeleteState.status,
+    router,
+  ]);
 
   const logsByPeriod = useMemo(() => {
     const map = new Map<string, PeriodBleedingLog[]>();
