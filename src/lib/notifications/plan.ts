@@ -135,7 +135,8 @@ export function planRemindersForUser(input: {
     // If the morning slot already passed, catch up later the same day.
     if (scheduledFor.getTime() < now.getTime() - 60_000) {
       scheduledFor = adjustForQuietHours({
-        scheduledFor: now,
+        // One minute ago so the same cron pass can deliver immediately.
+        scheduledFor: new Date(now.getTime() - 60_000),
         timeZone: input.prefs.timezone,
         quietHoursStart: input.prefs.quietHoursStart,
         quietHoursEnd: input.prefs.quietHoursEnd,

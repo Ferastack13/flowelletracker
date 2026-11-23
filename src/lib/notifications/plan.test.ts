@@ -119,9 +119,9 @@ describe("planRemindersForUser", () => {
     assert.equal(planned.length, 1);
     assert.equal(planned[0]?.reminderType, "checkin");
     assert.equal(planned[0]?.eventDate, "2026-11-20");
-    assert.ok(
-      new Date(planned[0]!.scheduledForIso).getTime() >= now.getTime() - 60_000,
-    );
+    const scheduledAt = new Date(planned[0]!.scheduledForIso).getTime();
+    assert.ok(scheduledAt <= now.getTime());
+    assert.ok(scheduledAt >= now.getTime() - 120_000);
   });
 });
 

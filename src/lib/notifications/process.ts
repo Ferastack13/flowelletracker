@@ -43,15 +43,17 @@ export async function processDueNotifications(now = new Date()): Promise<{
     };
   }
 
-  const resync = await resyncAllUsersWithProfiles();
+  const resync = await resyncAllUsersWithProfiles(200, { now });
   const admin = createAdminClient();
+  // Include jobs scheduled during this run (catch-up uses the same clock).
+  const dueCutoff = new Date(Math.max(now.getTime(), Date.now()));
   const { data: due } = await admin
     .from("notification_schedules")
     .select(
       "id, user_id, reminder_type, channel, scheduled_for, event_date, attempt_count, dedupe_key",
     )
     .eq("status", "pending")
-    .lte("scheduled_for", now.toISOString())
+    .lte("scheduled_for", dueCutoff.toISOString())
     .order("scheduled_for", { ascending: true })
     .limit(BATCH_SIZE);
 

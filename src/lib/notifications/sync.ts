@@ -66,7 +66,10 @@ async function hasCheckinToday(
   return Boolean(data?.id);
 }
 
-export async function resyncUserReminders(userId: string): Promise<{
+export async function resyncUserReminders(
+  userId: string,
+  options?: { now?: Date },
+): Promise<{
   ok: boolean;
   planned: number;
   cancelled: number;
@@ -92,7 +95,7 @@ export async function resyncUserReminders(userId: string): Promise<{
     }
 
     const prefs = mapPrefs(profile as ProfileNotifyRow);
-    const now = new Date();
+    const now = options?.now ?? new Date();
     const today = zonedCalendarDate(now, prefs.timezone);
     const periods = await loadPeriods(admin, userId);
     const completedCheckin = await hasCheckinToday(admin, userId, today);
@@ -180,7 +183,10 @@ export async function resyncUserReminders(userId: string): Promise<{
   }
 }
 
-export async function resyncAllUsersWithProfiles(limit = 200): Promise<{
+export async function resyncAllUsersWithProfiles(
+  limit = 200,
+  options?: { now?: Date },
+): Promise<{
   users: number;
   errors: number;
 }> {
@@ -193,7 +199,7 @@ export async function resyncAllUsersWithProfiles(limit = 200): Promise<{
   let users = 0;
   let errors = 0;
   for (const row of data ?? []) {
-    const result = await resyncUserReminders(String(row.user_id));
+    const result = await resyncUserReminders(String(row.user_id), options);
     users += 1;
     if (!result.ok) errors += 1;
   }
